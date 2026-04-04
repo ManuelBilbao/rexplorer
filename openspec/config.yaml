@@ -1,0 +1,49 @@
+schema: spec-driven
+
+context: |
+  # Rexplorer — Ethereum[-like] Blockchain Explorer
+
+  ## Tech Stack
+  - Language: Elixir
+  - Framework: Phoenix (LiveView vs React TBD)
+  - Database: TBD (likely PostgreSQL)
+  - Infrastructure: Own archive nodes
+
+  ## Target Chains
+  Ethereum mainnet, Optimism, Base, BNB, Polygon, Ethrex-based L2s
+
+  ## Core Philosophy
+  - "The explorer that explains what happened, not just what was called"
+  - Primary audience: regular users (with advanced modes for devs/analysts)
+  - Human-readable transaction stories (decode intent, not just calldata)
+  - Cross-chain journey tracking (L1↔L2 bridges, multi-chain flows)
+  - Account Abstraction native from day one
+  - L2 lifecycle visibility (sequenced → batched → proven → finalized)
+  - Chain-extensible architecture (adapter/plugin system)
+  - Designed for Etherscan-level scale
+
+  ## Key Architectural Concepts
+  - Semantic decoder pipeline: ABI decode → Unwrap (Safe, AA, Multicall) → Interpret (protocol-specific) → Narrate
+  - Core unit is "operation" (user intent), not just "transaction"
+  - Chain adapters at every layer: ingestion, decoding, interpretation, UI
+
+  ## Documentation Requirements
+  - Every component, endpoint, and workflow must be documented in code AND markdown
+  - All workflows (user-facing and system-internal) must include Mermaid sequence diagrams
+  - Both system workflows (indexing, decoding) and user workflows (tx lookup, address view) need diagrams
+
+rules:
+  proposal:
+    - Always include a "Non-goals" section
+    - Reference how this change fits into the larger rexplorer architecture
+  design:
+    - Include Mermaid diagrams for any workflow or data flow
+    - Document all public interfaces/APIs
+    - Reference chain extensibility implications
+  specs:
+    - Scenarios should cover both regular user and advanced/dev user perspectives where applicable
+    - Include chain-specific variations when relevant
+  tasks:
+    - Include documentation tasks alongside implementation tasks
+    - Every workflow task must have a corresponding "document workflow with Mermaid diagram" task
+    - Break tasks into chunks of max 2 hours
