@@ -125,7 +125,7 @@ export function TxDetailPage() {
           <DetailRow label="Block" value={tx.block_number?.toLocaleString() ?? '-'} link={tx.block_number ? `/${chain}/block/${tx.block_number}` : undefined} />
           <DetailRow label="From" value={tx.from_address} mono copyable link={`/${chain}/address/${tx.from_address}`} />
           <DetailRow label="To" value={tx.to_address ?? 'Contract Creation'} mono copyable link={tx.to_address ? `/${chain}/address/${tx.to_address}` : undefined} />
-          <DetailRow label="Value" value={formatAmount(tx.value, 18, 'ETH')} />
+          <DetailRow label="Value" value={formatAmount(tx.value, 18, nativeSymbol(chain))} />
           <DetailRow label="Gas Used" value={tx.gas_used ? formatGas(tx.gas_used) : '-'} />
           {tx.gas_price && <DetailRow label="Gas Price" value={`${(tx.gas_price / 1e9).toFixed(2)} gwei`} />}
           {opType && <DetailRow label="Operation Type" value={opType} />}
@@ -259,6 +259,14 @@ const CHAIN_COLORS: Record<string, { border: string; dot: string; name: string }
   base: { border: 'border-l-blue-600', dot: 'bg-blue-600', name: 'Base' },
   bnb: { border: 'border-l-yellow-500', dot: 'bg-yellow-500', name: 'BNB Chain' },
   polygon: { border: 'border-l-purple-500', dot: 'bg-purple-500', name: 'Polygon' },
+}
+
+const NATIVE_SYMBOLS: Record<string, string> = {
+  ethereum: 'ETH', optimism: 'ETH', base: 'ETH', bnb: 'BNB', polygon: 'POL',
+}
+
+function nativeSymbol(chain: string | null): string {
+  return NATIVE_SYMBOLS[chain || ''] || 'ETH'
 }
 
 function chainBorderColor(chain: string | null): string {
