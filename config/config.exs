@@ -22,7 +22,7 @@ config :rexplorer, Rexplorer.Chain.Registry,
 # RPC URLs are per-chain, keyed by EIP-155 chain ID
 config :rexplorer_indexer,
   chains: %{
-    1 => %{rpc_url: "http://localhost:8545"},
+    1 => %{rpc_url: "http://ts.mainnet.internal.lambdaclass.com:8545/"},
     10 => %{rpc_url: "http://localhost:9545"},
     8453 => %{rpc_url: "http://localhost:9546"},
     56 => %{rpc_url: "http://localhost:8546"},

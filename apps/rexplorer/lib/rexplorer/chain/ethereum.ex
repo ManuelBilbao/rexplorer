@@ -106,10 +106,13 @@ defmodule Rexplorer.Chain.Ethereum do
   end
 
   defp decode_uint256(nil), do: Decimal.new(0)
+  defp decode_uint256("0x"), do: Decimal.new(0)
 
-  defp decode_uint256("0x" <> hex) do
+  defp decode_uint256("0x" <> hex) when byte_size(hex) > 0 do
     hex
     |> String.to_integer(16)
     |> Decimal.new()
   end
+
+  defp decode_uint256(_), do: Decimal.new(0)
 end

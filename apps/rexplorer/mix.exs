@@ -41,7 +41,9 @@ defmodule Rexplorer.MixProject do
       {:ecto_sql, "~> 3.13"},
       {:postgrex, ">= 0.0.0"},
       {:jason, "~> 1.2"},
-      {:req, "~> 0.5"}
+      {:req, "~> 0.5"},
+      {:ex_abi, "~> 0.8"},
+      {:ex_keccak, "~> 0.7"}
     ]
   end
 
