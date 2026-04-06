@@ -27,16 +27,7 @@ defmodule Rexplorer.Chain.Ethereum do
 
   @impl true
   def extract_operations(transaction) do
-    [
-      %{
-        operation_type: :call,
-        operation_index: 0,
-        from_address: transaction.from_address,
-        to_address: transaction.to_address,
-        value: transaction.value,
-        input: transaction.input
-      }
-    ]
+    Rexplorer.Unwrapper.Registry.unwrap(transaction, chain_id())
   end
 
   @impl true

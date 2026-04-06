@@ -41,7 +41,14 @@ defmodule Rexplorer.Decoder.ABI do
     "supply(address,uint256,address,uint16)",
     "withdraw(address,uint256,address)",
     "borrow(address,uint256,uint256,uint16,address)",
-    "repay(address,uint256,uint256,address)"
+    "repay(address,uint256,uint256,address)",
+
+    # Safe Multisig
+    "execTransaction(address,uint256,bytes,uint8,uint256,uint256,uint256,address,address,bytes)",
+
+    # Multicall
+    "multicall(bytes[])",
+    "multicall(uint256,bytes[])"
   ]
 
   # Known event signatures: {signature, param_names, indexed_flags}
@@ -82,7 +89,9 @@ defmodule Rexplorer.Decoder.ABI do
     "withdraw" => ["amount"],
     "supply" => ["asset", "amount", "onBehalfOf", "referralCode"],
     "borrow" => ["asset", "amount", "interestRateMode", "referralCode", "onBehalfOf"],
-    "repay" => ["asset", "amount", "interestRateMode", "onBehalfOf"]
+    "repay" => ["asset", "amount", "interestRateMode", "onBehalfOf"],
+    "execTransaction" => ["to", "value", "data", "operation", "safeTxGas", "baseGas", "gasPrice", "gasToken", "refundReceiver", "signatures"],
+    "multicall" => ["data"]
   }
 
   # -------------------------------------------------------------------
