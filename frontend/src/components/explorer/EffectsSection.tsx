@@ -53,7 +53,7 @@ export function EffectsSection({ tokenTransfers, logs }: EffectsSectionProps) {
           <div key={`xfer-${i}`} className="flex items-center gap-3 text-sm px-5 py-3">
             <span className="text-base shrink-0">→</span>
             <span className="text-rex-text">
-              {t.amount} ({t.token_type}){' '}
+              {formatTransferAmount(t)} {tokenLabel(t, chain)}{' '}
               <Link to={`/${chain}/address/${t.from_address}`} className="text-rex-primary hover:underline font-mono">
                 {t.from_address.slice(0, 6)}...{t.from_address.slice(-4)}
               </Link>
@@ -67,6 +67,49 @@ export function EffectsSection({ tokenTransfers, logs }: EffectsSectionProps) {
       </div>
     </div>
   )
+}
+
+const NATIVE_SYMBOLS: Record<string, string> = {
+  ethereum: 'ETH',
+  optimism: 'ETH',
+  base: 'ETH',
+  bnb: 'BNB',
+  polygon: 'POL',
+}
+
+function formatTransferAmount(t: TokenTransfer): string {
+  if (t.token_type === 'native') {
+    return formatWithDecimals(t.amount, 18)
+  }
+  // For ERC-20 in raw fallback, we don't have decimals info — show raw
+  return t.amount
+}
+
+function formatWithDecimals(raw: string, decimals: number): string {
+  try {
+    const num = BigInt(raw)
+    const divisor = BigInt(10 ** decimals)
+    const whole = num / divisor
+    const remainder = num % divisor
+
+    if (remainder === 0n) {
+      return whole.toLocaleString()
+    }
+
+    const fracStr = remainder.toString().padStart(decimals, '0')
+    const trimmed = fracStr.replace(/0+$/, '')
+    const display = trimmed.slice(0, 6)
+    return `${whole.toLocaleString()}.${display}`
+  } catch {
+    return raw
+  }
+}
+
+function tokenLabel(t: TokenTransfer, chain: string | null): string {
+  if (t.token_type === 'native') {
+    return NATIVE_SYMBOLS[chain || ''] || 'ETH'
+  }
+  return t.token_type.toUpperCase()
 }
 
 function eventIcon(eventName: string): string {

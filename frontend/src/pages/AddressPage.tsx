@@ -78,7 +78,7 @@ export function AddressPage() {
                 <span>{t.from_address.slice(0, 10)}...</span>
                 <span>→</span>
                 <span>{t.to_address.slice(0, 10)}...</span>
-                <span className="ml-auto">{t.amount} ({t.token_type})</span>
+                <span className="ml-auto">{formatTransferAmount(t)} {t.token_type === 'native' ? nativeSymbol(chain) : t.token_type.toUpperCase()}</span>
               </div>
             ))}
           </div>
@@ -86,4 +86,27 @@ export function AddressPage() {
       </div>
     </div>
   )
+}
+
+function formatTransferAmount(t: { amount: string; token_type: string }): string {
+  if (t.token_type === 'native') {
+    try {
+      const num = BigInt(t.amount)
+      const divisor = BigInt(10 ** 18)
+      const whole = num / divisor
+      const remainder = num % divisor
+      if (remainder === 0n) return whole.toLocaleString()
+      const fracStr = remainder.toString().padStart(18, '0').replace(/0+$/, '').slice(0, 6)
+      return `${whole.toLocaleString()}.${fracStr}`
+    } catch { return t.amount }
+  }
+  return t.amount
+}
+
+const NATIVE_SYMBOLS: Record<string, string> = {
+  ethereum: 'ETH', optimism: 'ETH', base: 'ETH', bnb: 'BNB', polygon: 'POL',
+}
+
+function nativeSymbol(chain: string | null): string {
+  return NATIVE_SYMBOLS[chain || ''] || 'ETH'
 }

@@ -152,6 +152,11 @@ defmodule Rexplorer.Decoder.Narrator do
 
   defp format_token_amount(amount, _token), do: to_string(amount)
 
+  @doc "Formats a native token amount (18 decimals) for display."
+  def format_native_amount(amount) when is_integer(amount) and amount == 0, do: "0"
+  def format_native_amount(amount) when is_integer(amount), do: format_raw_amount(amount, 18)
+  def format_native_amount(_), do: "?"
+
   defp format_raw_amount(nil, _decimals), do: "?"
 
   defp format_raw_amount(amount, decimals) when is_integer(amount) and is_integer(decimals) do

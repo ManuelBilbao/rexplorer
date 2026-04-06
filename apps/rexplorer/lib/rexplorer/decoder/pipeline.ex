@@ -52,17 +52,25 @@ defmodule Rexplorer.Decoder.Pipeline do
         end
 
       {:error, :unknown_selector} ->
-        if to_address do
-          selector_hex =
-            if input && byte_size(input) >= 4 do
-              "0x" <> Base.encode16(binary_part(input, 0, 4), case: :lower)
-            else
-              "unknown"
-            end
+        cond do
+          is_nil(to_address) ->
+            {:ok, "Contract creation"}
 
-          {:ok, "Called #{selector_hex} on #{to_address}"}
-        else
-          {:ok, "Contract creation"}
+          is_nil(input) or input == <<>> or input == "" ->
+            # Plain value transfer (no calldata)
+            amount = tx_context.value
+            symbol = native_token_symbol(chain_id)
+            {:ok, "#{tx_context.from_address} transferred #{Narrator.format_native_amount(amount)} #{symbol} to #{to_address}"}
+
+          true ->
+            selector_hex =
+              if byte_size(input) >= 4 do
+                "0x" <> Base.encode16(binary_part(input, 0, 4), case: :lower)
+              else
+                "unknown"
+              end
+
+            {:ok, "Called #{selector_hex} on #{to_address}"}
         end
 
       {:error, reason} ->
@@ -93,6 +101,13 @@ defmodule Rexplorer.Decoder.Pipeline do
   defp decimal_to_integer(%Decimal{} = d), do: Decimal.to_integer(d)
   defp decimal_to_integer(n) when is_integer(n), do: n
   defp decimal_to_integer(_), do: 0
+
+  defp native_token_symbol(chain_id) do
+    case Rexplorer.Chain.Registry.get_adapter(chain_id) do
+      {:ok, adapter} -> adapter.native_token() |> elem(0)
+      _ -> "ETH"
+    end
+  end
 
 
 end
