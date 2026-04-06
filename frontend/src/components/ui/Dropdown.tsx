@@ -38,7 +38,7 @@ export default function Dropdown({ trigger, children }: DropdownProps) {
         {trigger}
       </div>
       {open && (
-        <div className="absolute right-0 z-50 mt-1 min-w-[10rem] rounded-md border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-800">
+        <div className="absolute right-0 z-50 mt-1 min-w-[10rem] rounded-md border border-rex-border bg-rex-bg-secondary py-1 shadow-lg">
           {children}
         </div>
       )}

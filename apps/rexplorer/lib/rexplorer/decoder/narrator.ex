@@ -128,7 +128,7 @@ defmodule Rexplorer.Decoder.Narrator do
   defp resolve_token(nil, _cache), do: %{symbol: "???", decimals: 18}
 
   defp resolve_token(address, cache) when is_binary(address) do
-    Map.get(cache, String.downcase(address), %{symbol: truncate_address(address), decimals: 18})
+    Map.get(cache, String.downcase(address), %{symbol: address, decimals: 18})
   end
 
   defp resolve_token(_, _), do: %{symbol: "???", decimals: 18}
@@ -170,14 +170,7 @@ defmodule Rexplorer.Decoder.Narrator do
   end
 
   defp truncate_address(nil), do: "???"
-
-  defp truncate_address(addr) when is_binary(addr) do
-    if String.length(addr) > 12 do
-      String.slice(addr, 0, 6) <> "..." <> String.slice(addr, -4, 4)
-    else
-      addr
-    end
-  end
+  defp truncate_address(addr) when is_binary(addr), do: addr
 
   defp humanize(atom) when is_atom(atom) do
     atom |> Atom.to_string() |> String.replace("_", " ") |> String.capitalize()

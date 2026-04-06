@@ -17,7 +17,7 @@ export function TimeAgo({ timestamp }: TimeAgoProps) {
 
   return (
     <span
-      className="text-gray-600 dark:text-gray-400"
+      className="text-rex-text-secondary"
       title={formatTimestamp(timestamp)}
     >
       {display}

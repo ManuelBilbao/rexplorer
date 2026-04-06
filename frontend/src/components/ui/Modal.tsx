@@ -37,15 +37,15 @@ export default function Modal({ open, onClose, title, children }: ModalProps) {
       />
 
       {/* Card */}
-      <div className="relative z-10 w-full max-w-lg rounded-lg bg-white p-6 shadow-xl dark:bg-gray-800">
+      <div className="relative z-10 w-full max-w-lg rounded-lg bg-rex-bg-secondary p-6 shadow-xl">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+          <h2 className="text-lg font-semibold text-rex-text">
             {title}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+            className="text-rex-text-secondary hover:text-rex-text"
             aria-label="Close"
           >
             <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -57,7 +57,7 @@ export default function Modal({ open, onClose, title, children }: ModalProps) {
             </svg>
           </button>
         </div>
-        <div className="text-gray-700 dark:text-gray-300">{children}</div>
+        <div className="text-rex-text">{children}</div>
       </div>
     </div>
   );

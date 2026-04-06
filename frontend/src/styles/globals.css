@@ -1,33 +1,65 @@
 @import "tailwindcss";
 
+/*
+ * Fossil v4 — Copper accent palette
+ * Variables swap automatically when .dark is on <html>
+ * Components just use `bg-rex-bg`, `text-rex-text` etc. — no dark: prefix needed
+ */
+
 @theme {
-  --color-rex-primary: #6366f1;
-  --color-rex-primary-hover: #4f46e5;
-  --color-rex-success: #22c55e;
-  --color-rex-danger: #ef4444;
-  --color-rex-warning: #f59e0b;
-  --color-rex-info: #3b82f6;
+  --color-rex-primary: var(--rex-primary);
+  --color-rex-primary-hover: var(--rex-primary-hover);
+  --color-rex-success: var(--rex-success);
+  --color-rex-danger: var(--rex-danger);
+  --color-rex-warning: var(--rex-warning);
+  --color-rex-info: var(--rex-info);
 
-  --color-rex-bg: #ffffff;
-  --color-rex-bg-secondary: #f8fafc;
-  --color-rex-bg-tertiary: #f1f5f9;
-  --color-rex-text: #0f172a;
-  --color-rex-text-secondary: #64748b;
-  --color-rex-border: #e2e8f0;
+  --color-rex-bg: var(--rex-bg);
+  --color-rex-bg-secondary: var(--rex-bg-secondary);
+  --color-rex-bg-tertiary: var(--rex-bg-tertiary);
+  --color-rex-text: var(--rex-text);
+  --color-rex-text-secondary: var(--rex-text-secondary);
+  --color-rex-border: var(--rex-border);
+}
 
-  --color-rex-bg-dark: #0f172a;
-  --color-rex-bg-secondary-dark: #1e293b;
-  --color-rex-bg-tertiary-dark: #334155;
-  --color-rex-text-dark: #f1f5f9;
-  --color-rex-text-secondary-dark: #94a3b8;
-  --color-rex-border-dark: #334155;
+/* Light mode (default) */
+:root {
+  --rex-primary: #b07a4a;
+  --rex-primary-hover: #9a6a3d;
+  --rex-success: #3d8f55;
+  --rex-danger: #c4534f;
+  --rex-warning: #b07a4a;
+  --rex-info: #5a8fc4;
+
+  --rex-bg: #faf8f5;
+  --rex-bg-secondary: #ffffff;
+  --rex-bg-tertiary: #f3f0ec;
+  --rex-text: #1c1917;
+  --rex-text-secondary: #6b6560;
+  --rex-border: #e5e0da;
+}
+
+/* Dark mode */
+.dark {
+  --rex-primary: #cd8b5e;
+  --rex-primary-hover: #dba070;
+  --rex-success: #5dba7d;
+  --rex-danger: #d4706f;
+  --rex-warning: #cd8b5e;
+  --rex-info: #6ba3d6;
+
+  --rex-bg: #111116;
+  --rex-bg-secondary: #19191f;
+  --rex-bg-tertiary: #24242b;
+  --rex-text: #eae8e4;
+  --rex-text-secondary: #908c87;
+  --rex-border: #2a2a31;
 }
 
 body {
-  @apply bg-rex-bg text-rex-text antialiased;
+  background-color: var(--rex-bg);
+  color: var(--rex-text);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-}
-
-.dark body {
-  @apply bg-rex-bg-dark text-rex-text-dark;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }

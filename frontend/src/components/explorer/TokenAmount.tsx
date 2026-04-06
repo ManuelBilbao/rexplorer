@@ -8,7 +8,7 @@ interface TokenAmountProps {
 
 export function TokenAmount({ value, symbol, decimals }: TokenAmountProps) {
   return (
-    <span className="font-mono text-gray-900 dark:text-gray-100" title={value}>
+    <span className="font-mono text-rex-text" title={value}>
       {formatAmount(value, decimals, symbol)}
     </span>
   )

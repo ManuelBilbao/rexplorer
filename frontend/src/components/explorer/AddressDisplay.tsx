@@ -15,7 +15,7 @@ export function AddressDisplay({ address, label, chain }: AddressDisplayProps) {
     <span className="inline-flex items-center gap-1">
       <Link
         to={`/${chain}/address/${address}`}
-        className="font-mono text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline"
+        className="font-mono text-rex-primary hover:opacity-80 hover:underline"
         title={address}
       >
         {display}

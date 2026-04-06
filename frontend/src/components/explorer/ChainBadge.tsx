@@ -16,10 +16,10 @@ interface ChainBadgeProps {
 }
 
 export function ChainBadge({ chain }: ChainBadgeProps) {
-  const dotColor = CHAIN_COLORS[chain.toLowerCase()] || 'bg-gray-400'
+  const dotColor = CHAIN_COLORS[chain.toLowerCase()] || 'bg-rex-text-secondary'
 
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-rex-bg-tertiary px-2.5 py-0.5 text-xs font-medium text-rex-text-secondary">
       <span className={`h-2 w-2 rounded-full ${dotColor}`} />
       {chain}
     </span>

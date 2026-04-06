@@ -10,7 +10,7 @@ defmodule Rexplorer.Decoder.Pipeline do
   alias Rexplorer.Decoder.{ABI, Narrator}
   alias Rexplorer.Decoder.Interpreter.Registry, as: InterpreterRegistry
 
-  @decoder_version 1
+  @decoder_version 2
 
   @doc "Returns the current decoder version."
   def decoder_version, do: @decoder_version
@@ -60,7 +60,7 @@ defmodule Rexplorer.Decoder.Pipeline do
               "unknown"
             end
 
-          {:ok, "Called #{selector_hex} on #{truncate(to_address)}"}
+          {:ok, "Called #{selector_hex} on #{to_address}"}
         else
           {:ok, "Contract creation"}
         end
@@ -71,11 +71,11 @@ defmodule Rexplorer.Decoder.Pipeline do
   end
 
   defp wrap_with_context(summary, :multisig_execution, from_address) do
-    "Safe #{truncate(from_address)}: #{summary}"
+    "Safe #{from_address}: #{summary}"
   end
 
   defp wrap_with_context(summary, :delegate_call, from_address) do
-    "Safe #{truncate(from_address)} (delegatecall): #{summary}"
+    "Safe #{from_address} (delegatecall): #{summary}"
   end
 
   defp wrap_with_context(summary, :multicall_item, _from_address) do
@@ -94,9 +94,5 @@ defmodule Rexplorer.Decoder.Pipeline do
   defp decimal_to_integer(n) when is_integer(n), do: n
   defp decimal_to_integer(_), do: 0
 
-  defp truncate(addr) when is_binary(addr) and byte_size(addr) > 12 do
-    String.slice(addr, 0, 6) <> "..." <> String.slice(addr, -4, 4)
-  end
 
-  defp truncate(addr), do: addr || "???"
 end

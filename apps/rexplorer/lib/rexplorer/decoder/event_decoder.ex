@@ -205,7 +205,7 @@ defmodule Rexplorer.Decoder.EventDecoder do
   defp resolve_token(nil, _cache), do: %{symbol: "???", decimals: 18}
 
   defp resolve_token(addr, cache) when is_binary(addr) do
-    Map.get(cache, String.downcase(addr), %{symbol: truncate(addr), decimals: 18})
+    Map.get(cache, String.downcase(addr), %{symbol: addr, decimals: 18})
   end
 
   defp resolve_token(_, _), do: %{symbol: "???", decimals: 18}
@@ -239,10 +239,6 @@ defmodule Rexplorer.Decoder.EventDecoder do
   defp format_raw(v, _), do: to_string(v)
 
   defp truncate(nil), do: "???"
-
-  defp truncate(addr) when is_binary(addr) and byte_size(addr) > 12 do
-    String.slice(addr, 0, 6) <> "..." <> String.slice(addr, -4, 4)
-  end
-
+  defp truncate(addr) when is_binary(addr), do: addr
   defp truncate(addr), do: to_string(addr)
 end

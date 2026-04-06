@@ -29,11 +29,11 @@ let toastId = 0;
 
 const typeClasses: Record<ToastType, string> = {
   success:
-    "bg-green-600 text-white dark:bg-green-500",
+    "bg-rex-success text-white",
   error:
-    "bg-red-600 text-white dark:bg-red-500",
+    "bg-rex-danger text-white",
   info:
-    "bg-blue-600 text-white dark:bg-blue-500",
+    "bg-rex-primary text-white",
 };
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {

@@ -8,6 +8,7 @@ import { BlockDetailPage } from './pages/BlockDetailPage'
 import { TxDetailPage } from './pages/TxDetailPage'
 import { AddressPage } from './pages/AddressPage'
 import { NotFoundPage } from './pages/NotFoundPage'
+import { DesignPreview } from './pages/DesignPreview'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -24,6 +25,7 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route element={<PageContainer />}>
+            <Route path="/design" element={<DesignPreview />} />
             <Route path="/" element={<LandingPage />} />
             <Route path="/:chain" element={<HomePage />} />
             <Route path="/:chain/blocks" element={<BlockListPage />} />

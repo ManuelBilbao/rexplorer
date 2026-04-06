@@ -9,15 +9,15 @@ interface BadgeProps {
 
 const variantClasses: Record<BadgeVariant, string> = {
   green:
-    "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
+    "bg-rex-success/10 text-rex-success",
   red:
-    "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
+    "bg-rex-danger/10 text-rex-danger",
   yellow:
-    "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
+    "bg-rex-warning/10 text-rex-warning",
   blue:
-    "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
+    "bg-rex-primary/10 text-rex-primary",
   gray:
-    "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300",
+    "bg-rex-bg-tertiary text-rex-text-secondary",
 };
 
 export default function Badge({ variant = "gray", children }: BadgeProps) {

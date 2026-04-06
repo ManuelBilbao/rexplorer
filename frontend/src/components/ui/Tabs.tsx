@@ -30,7 +30,7 @@ interface TabListProps {
 
 export function TabList({ children }: TabListProps) {
   return (
-    <div className="flex border-b border-gray-200 dark:border-gray-700">
+    <div className="flex border-b border-rex-border">
       {React.Children.map(children, (child, index) => {
         if (React.isValidElement<TabInternalProps>(child)) {
           return React.cloneElement(child, { index });
@@ -59,8 +59,8 @@ export function Tab({ children, index = 0 }: TabProps) {
       onClick={() => setActiveIndex(index)}
       className={`px-4 py-2 text-sm font-medium transition-colors focus:outline-none ${
         isActive
-          ? "border-b-2 border-rex-primary text-rex-primary dark:border-rex-primary dark:text-rex-primary"
-          : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+          ? "border-b-2 border-rex-primary text-rex-primary"
+          : "text-rex-text-secondary hover:text-rex-text"
       }`}
     >
       {children}

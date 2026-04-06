@@ -31,20 +31,20 @@ export default function DataTable<T>({
 }: DataTableProps<T>) {
   return (
     <div className="w-full overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-        <thead className="bg-gray-50 dark:bg-gray-800">
+      <table className="min-w-full divide-y divide-rex-border">
+        <thead className="bg-rex-bg-tertiary">
           <tr>
             {columns.map((col, i) => (
               <th
                 key={i}
-                className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400"
+                className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-rex-text-secondary"
               >
                 {col.header}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-900">
+        <tbody className="divide-y divide-rex-border bg-rex-bg-secondary">
           {loading
             ? Array.from({ length: 5 }).map((_, rowIdx) => (
                 <tr key={rowIdx}>
@@ -60,7 +60,7 @@ export default function DataTable<T>({
                 <tr>
                   <td
                     colSpan={columns.length}
-                    className="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400"
+                    className="px-4 py-8 text-center text-sm text-rex-text-secondary"
                   >
                     {emptyMessage}
                   </td>
@@ -69,12 +69,12 @@ export default function DataTable<T>({
               : data.map((row, rowIdx) => (
                 <tr
                   key={rowIdx}
-                  className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  className="hover:bg-rex-bg-tertiary transition-colors"
                 >
                   {columns.map((col, colIdx) => (
                     <td
                       key={colIdx}
-                      className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap"
+                      className="px-4 py-3 text-sm text-rex-text whitespace-nowrap"
                     >
                       {getCell(row, col.accessor)}
                     </td>
