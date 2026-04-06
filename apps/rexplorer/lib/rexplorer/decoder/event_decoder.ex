@@ -202,19 +202,26 @@ defmodule Rexplorer.Decoder.EventDecoder do
 
   # Helpers
 
-  defp resolve_token(nil, _cache), do: %{symbol: "???", decimals: 18}
+  defp resolve_token(nil, _cache), do: %{symbol: "???", decimals: nil}
 
   defp resolve_token(addr, cache) when is_binary(addr) do
-    Map.get(cache, String.downcase(addr), %{symbol: addr, decimals: 18})
+    Map.get(cache, String.downcase(addr), %{symbol: addr, decimals: nil})
   end
 
-  defp resolve_token(_, _), do: %{symbol: "???", decimals: 18}
+  defp resolve_token(_, _), do: %{symbol: "???", decimals: nil}
+
+  @unlimited_threshold round(:math.pow(10, 30))
 
   defp format_amount(nil, _token), do: "?"
+  defp format_amount(val, _token) when is_integer(val) and val >= @unlimited_threshold, do: "Unlimited"
+  defp format_amount(val, %{decimals: nil}), do: to_string(val)
   defp format_amount(val, token) when is_integer(val), do: format_raw(val, token.decimals)
+
+  defp format_amount(val, %{decimals: nil}) when is_binary(val), do: val
 
   defp format_amount(val, token) when is_binary(val) do
     case Integer.parse(val) do
+      {n, ""} when n >= @unlimited_threshold -> "Unlimited"
       {n, ""} -> format_raw(n, token.decimals)
       _ -> val
     end

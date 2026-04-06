@@ -48,6 +48,7 @@ defmodule Rexplorer.Decoder.Interpreter.ERC20 do
        type: :approve,
        protocol: "ERC-20",
        params: %{
+         from: tx_context.from_address,
          token: tx_context.to_address,
          spender: params["spender"] || params["param0"],
          amount: params["amount"] || params["value"] || params["param1"]

@@ -125,17 +125,26 @@ defmodule Rexplorer.Decoder.Narrator do
     |> Map.new(fn {addr, info} -> {String.downcase(addr), info} end)
   end
 
-  defp resolve_token(nil, _cache), do: %{symbol: "???", decimals: 18}
+  defp resolve_token(nil, _cache), do: %{symbol: "???", decimals: nil}
 
   defp resolve_token(address, cache) when is_binary(address) do
-    Map.get(cache, String.downcase(address), %{symbol: address, decimals: 18})
+    Map.get(cache, String.downcase(address), %{symbol: address, decimals: nil})
   end
 
-  defp resolve_token(_, _), do: %{symbol: "???", decimals: 18}
+  defp resolve_token(_, _), do: %{symbol: "???", decimals: nil}
 
   # Amount formatting
 
+  # Max uint256 ≈ 1.15e77 — anything above 1e30 is effectively "unlimited"
+  @unlimited_threshold round(:math.pow(10, 30))
+
   defp format_token_amount(nil, _token), do: "?"
+
+  defp format_token_amount(amount, _token) when is_integer(amount) and amount >= @unlimited_threshold do
+    "Unlimited"
+  end
+
+  defp format_token_amount(amount, %{decimals: nil}), do: to_string(amount)
 
   defp format_token_amount(amount, token) when is_integer(amount) do
     format_raw_amount(amount, token.decimals)

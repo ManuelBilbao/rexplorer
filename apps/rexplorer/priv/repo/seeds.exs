@@ -74,8 +74,15 @@ tokens = [
     addresses: %{
       1 => "0xdac17f958d2ee523a2206206994597c13d831ec7",
       10 => "0x94b008aa00579c1307b0ef2c499ad98a8ce58e58",
-      56 => "0x55d398326f99059ff775485246999027b3197955",
       137 => "0xc2132d05d31c914a87c6611c10748aeb04b58e8f"
+    }
+  },
+  %{
+    name: "Binance-Peg BSC-USD",
+    symbol: "USDT",
+    decimals: 18,
+    addresses: %{
+      56 => "0x55d398326f99059ff775485246999027b3197955"
     }
   },
   %{
@@ -103,7 +110,7 @@ tokens = [
 
 for token_attrs <- tokens do
   token =
-    case Repo.get_by(Token, symbol: token_attrs.symbol) do
+    case Repo.get_by(Token, name: token_attrs.name) do
       nil ->
         %Token{}
         |> Token.changeset(Map.take(token_attrs, [:name, :symbol, :decimals]))
