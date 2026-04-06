@@ -14,8 +14,8 @@ defmodule Rexplorer.Decoder.Worker do
   require Logger
 
   import Ecto.Query
-  alias Rexplorer.{Repo, Schema.Operation}
-  alias Rexplorer.Decoder.{Pipeline, Narrator}
+  alias Rexplorer.{Repo, Schema.Operation, Schema.Log}
+  alias Rexplorer.Decoder.{Pipeline, Narrator, EventDecoder}
 
   @batch_size 100
   @poll_interval_ms 5_000
@@ -68,7 +68,44 @@ defmodule Rexplorer.Decoder.Worker do
         decode_and_update(op, token_caches)
       end)
 
+      # Also decode logs for the transactions in this batch
+      tx_ids = operations |> Enum.map(& &1.transaction_id) |> Enum.uniq()
+      decode_logs_for_transactions(tx_ids, token_caches, operations)
+
       length(operations)
+    end
+  end
+
+  defp decode_logs_for_transactions(tx_ids, token_caches, operations) do
+    logs =
+      from(l in Log,
+        where: l.transaction_id in ^tx_ids and is_nil(l.decoded),
+        select: l
+      )
+      |> Repo.all()
+
+    if logs != [] do
+      # Determine chain_id from operations
+      chain_id_by_tx =
+        Map.new(operations, fn op -> {op.transaction_id, op.chain_id} end)
+
+      Enum.each(logs, fn log ->
+        try do
+          chain_id = Map.get(chain_id_by_tx, log.transaction_id, log.chain_id)
+          token_cache = Map.get(token_caches, chain_id, %{})
+
+          case EventDecoder.decode_log(log, token_cache) do
+            nil -> :ok
+            decoded ->
+              log
+              |> Ecto.Changeset.change(%{decoded: decoded})
+              |> Repo.update()
+          end
+        rescue
+          e ->
+            Logger.warning("[Decoder] Failed to decode log #{log.id}: #{Exception.message(e)}")
+        end
+      end)
     end
   end
 

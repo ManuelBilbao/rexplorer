@@ -3,6 +3,7 @@ import { useParams } from 'react-router'
 import { useChain } from '../hooks/useChain'
 import { useTxDetail } from '../api/queries'
 import { formatAmount, formatGas } from '../lib/format'
+import { EffectsSection } from '../components/explorer/EffectsSection'
 
 export function TxDetailPage() {
   const chain = useChain()
@@ -116,7 +117,12 @@ export function TxDetailPage() {
         </div>
       )}
 
-      {/* Token Transfers */}
+      {/* Effects — composed from token transfers + decoded logs */}
+      <div className="mb-6">
+        <EffectsSection tokenTransfers={data.token_transfers} logs={data.logs} />
+      </div>
+
+      {/* Token Transfers (raw) */}
       {data.token_transfers.length > 0 && (
         <div className="border border-rex-border dark:border-rex-border-dark rounded-lg p-4 mb-6">
           <h2 className="text-lg font-semibold mb-3 text-rex-text dark:text-rex-text-dark">Token Transfers</h2>

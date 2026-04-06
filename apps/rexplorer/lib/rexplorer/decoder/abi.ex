@@ -44,6 +44,26 @@ defmodule Rexplorer.Decoder.ABI do
     "repay(address,uint256,uint256,address)"
   ]
 
+  # Known event signatures: {signature, param_names, indexed_flags}
+  # indexed_flags: list of booleans, true = param is indexed (in topics), false = in data
+  @known_events [
+    # ERC-20
+    {"Transfer(address,address,uint256)", ["from", "to", "value"], [true, true, false]},
+    {"Approval(address,address,uint256)", ["owner", "spender", "value"], [true, true, false]},
+    # Uniswap V2
+    {"Swap(address,uint256,uint256,uint256,uint256,address)", ["sender", "amount0In", "amount1In", "amount0Out", "amount1Out", "to"], [true, false, false, false, false, true]},
+    # Uniswap V3
+    {"Swap(address,address,int256,int256,uint160,uint128,int24)", ["sender", "recipient", "amount0", "amount1", "sqrtPriceX96", "liquidity", "tick"], [true, true, false, false, false, false, false]},
+    # Aave V3
+    {"Supply(address,address,address,uint256,uint16)", ["reserve", "user", "onBehalfOf", "amount", "referralCode"], [true, false, true, false, false]},
+    {"Withdraw(address,address,address,uint256)", ["reserve", "user", "to", "amount"], [true, true, true, false]},
+    {"Borrow(address,address,address,uint256,uint8,uint256,uint16)", ["reserve", "user", "onBehalfOf", "amount", "interestRateMode", "borrowRate", "referralCode"], [true, false, true, false, false, false, false]},
+    {"Repay(address,address,address,uint256,bool)", ["reserve", "user", "repayer", "amount", "useATokens"], [true, true, true, false, false]},
+    # WETH
+    {"Deposit(address,uint256)", ["dst", "wad"], [true, false]},
+    {"Withdrawal(address,uint256)", ["src", "wad"], [true, false]}
+  ]
+
   # Human-readable parameter names for signatures whose ABI.FunctionSelector
   # does not include input_names (i.e. they come back as []).
   @param_names %{
@@ -77,19 +97,19 @@ defmodule Rexplorer.Decoder.ABI do
     GenServer.start_link(__MODULE__, opts, name: __MODULE__)
   end
 
-  @doc """
-  Looks up a 4-byte binary selector in the registry.
+  @doc "Looks up an event definition by its 32-byte topic0 hash. Returns the event entry map or nil."
+  def lookup_event(topic0_hex) when is_binary(topic0_hex) do
+    key = {:event, topic0_hex}
 
-  Returns the stored ABI entry map or `nil` if the selector is not registered.
+    case :ets.lookup(@ets_table, key) do
+      [{^key, entry}] -> entry
+      [] -> nil
+    end
+  end
 
-  ## Examples
+  def lookup_event(_), do: nil
 
-      iex> Rexplorer.Decoder.ABI.lookup_selector(<<0xA9, 0x05, 0x9C, 0xBB>>)
-      %{function: "transfer", selector: %ABI.FunctionSelector{...}, param_names: ["to", "value"]}
-
-      iex> Rexplorer.Decoder.ABI.lookup_selector(<<0, 0, 0, 0>>)
-      nil
-  """
+  @doc "Looks up a 4-byte function selector in the registry. Returns the entry map or nil."
   @spec lookup_selector(<<_::32>>) :: map() | nil
   def lookup_selector(<<_::binary-size(4)>> = selector) do
     case :ets.lookup(@ets_table, selector) do
@@ -153,6 +173,7 @@ defmodule Rexplorer.Decoder.ABI do
     table = :ets.new(@ets_table, [:named_table, :set, :public, read_concurrency: true])
 
     Enum.each(@known_signatures, &register_signature/1)
+    Enum.each(@known_events, &register_event/1)
 
     {:ok, %{table: table}}
   end
@@ -183,6 +204,27 @@ defmodule Rexplorer.Decoder.ABI do
     }
 
     :ets.insert(@ets_table, {selector, entry})
+  end
+
+  defp register_event({signature, param_names, indexed_flags}) do
+    # Extract event name from signature
+    event_name = String.split(signature, "(") |> List.first()
+
+    # Compute topic0 as keccak256 of the event signature
+    topic0 = ExKeccak.hash_256(signature)
+    topic0_hex = "0x" <> Base.encode16(topic0, case: :lower)
+
+    # Parse types from signature
+    fs = ABI.FunctionSelector.decode(signature)
+
+    entry = %{
+      event_name: event_name,
+      types: fs.types,
+      param_names: param_names,
+      indexed: indexed_flags
+    }
+
+    :ets.insert(@ets_table, {{:event, topic0_hex}, entry})
   end
 
   # Convert decoded ABI values to friendly formats
