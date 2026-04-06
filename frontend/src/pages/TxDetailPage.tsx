@@ -236,12 +236,13 @@ function DetailRow({ label, value, mono, copyable, link }: { label: string; valu
         <span className={`${valueClass} text-rex-text`}>{value}</span>
       )}
       {copyable && (
-        <button onClick={handleCopy} className="ml-2 text-rex-text-secondary hover:text-rex-text shrink-0">
+        <button onClick={handleCopy} className="ml-2 text-rex-text-secondary hover:text-rex-text shrink-0 cursor-pointer">
           {copied ? (
             <span className="text-xs text-rex-success">✓</span>
           ) : (
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2" strokeWidth={1.5} />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
             </svg>
           )}
         </button>
