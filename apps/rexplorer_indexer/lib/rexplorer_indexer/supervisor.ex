@@ -40,10 +40,13 @@ defmodule RexplorerIndexer.ChainSupervisor do
       chain_id = adapter.chain_id()
       config = Map.get(chain_config, chain_id)
 
-      {RexplorerIndexer.Worker,
-       adapter: adapter,
-       rpc_url: config[:rpc_url],
-       name: {:global, {RexplorerIndexer.Worker, chain_id}}}
+      Supervisor.child_spec(
+        {RexplorerIndexer.Worker,
+         adapter: adapter,
+         rpc_url: config[:rpc_url],
+         name: {:global, {RexplorerIndexer.Worker, chain_id}}},
+        id: {RexplorerIndexer.Worker, chain_id}
+      )
     end)
   end
 end

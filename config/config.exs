@@ -15,7 +15,11 @@ config :rexplorer,
 
 config :rexplorer, Rexplorer.Chain.Registry,
   adapters: [
-    Rexplorer.Chain.Ethereum
+    Rexplorer.Chain.Ethereum,
+    Rexplorer.Chain.Optimism,
+    Rexplorer.Chain.Base,
+    Rexplorer.Chain.BNB,
+    Rexplorer.Chain.Polygon
   ]
 
 # Chain indexer configuration
@@ -25,7 +29,7 @@ config :rexplorer_indexer,
     1 => %{rpc_url: "http://ts.mainnet.internal.lambdaclass.com:8545/"},
     10 => %{rpc_url: "http://localhost:9545"},
     8453 => %{rpc_url: "http://localhost:9546"},
-    56 => %{rpc_url: "http://localhost:8546"},
+    56 => %{rpc_url: "https://rpc.ankr.com/bsc/f5103a1046566351899224d25cc33c39cf436edc57e64416e3da1605ed62b816"},
     137 => %{rpc_url: "http://localhost:8547"}
   }
 
