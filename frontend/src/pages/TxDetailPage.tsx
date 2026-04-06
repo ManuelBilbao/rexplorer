@@ -65,7 +65,7 @@ export function TxDetailPage() {
       </div>
 
       {/* Story Hero */}
-      <div className="bg-rex-bg-secondary border border-rex-border rounded-xl p-6">
+      <div className={`bg-rex-bg-secondary border border-rex-border rounded-xl p-6 border-l-4 ${chainBorderColor(chain)}`}>
         {mainSummary ? (
           <div className="flex items-start gap-4">
             <span className="text-2xl mt-0.5">{actionIcon(mainSummary)}</span>
@@ -81,6 +81,7 @@ export function TxDetailPage() {
                 }`}>
                   {tx.status === true ? '✓ Success' : tx.status === false ? '✗ Failed' : '⏳ Pending'}
                 </span>
+                <ChainBadge chain={chain} />
                 {tx.block_number && <Link to={`/${chain}/block/${tx.block_number}`} className="hover:text-rex-primary">Block {tx.block_number.toLocaleString()}</Link>}
                 {tx.block_timestamp && <span>{timeAgo(tx.block_timestamp)}</span>}
               </div>
@@ -96,6 +97,7 @@ export function TxDetailPage() {
               }`}>
                 {tx.status === true ? '✓ Success' : tx.status === false ? '✗ Failed' : '⏳ Pending'}
               </span>
+              <ChainBadge chain={chain} />
               {opType && opType !== 'call' && (
                 <span className="px-2 py-0.5 text-xs rounded bg-rex-bg-tertiary text-rex-text-secondary">{opType}</span>
               )}
@@ -248,5 +250,29 @@ function DetailRow({ label, value, mono, copyable, link }: { label: string; valu
         </button>
       )}
     </div>
+  )
+}
+
+const CHAIN_COLORS: Record<string, { border: string; dot: string; name: string }> = {
+  ethereum: { border: 'border-l-blue-500', dot: 'bg-blue-500', name: 'Ethereum' },
+  optimism: { border: 'border-l-red-500', dot: 'bg-red-500', name: 'Optimism' },
+  base: { border: 'border-l-blue-600', dot: 'bg-blue-600', name: 'Base' },
+  bnb: { border: 'border-l-yellow-500', dot: 'bg-yellow-500', name: 'BNB Chain' },
+  polygon: { border: 'border-l-purple-500', dot: 'bg-purple-500', name: 'Polygon' },
+}
+
+function chainBorderColor(chain: string | null): string {
+  return CHAIN_COLORS[chain || '']?.border || 'border-l-rex-primary'
+}
+
+function ChainBadge({ chain }: { chain: string | null }) {
+  const info = CHAIN_COLORS[chain || '']
+  if (!info) return null
+
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span className={`w-2 h-2 rounded-full ${info.dot}`} />
+      <span>{info.name}</span>
+    </span>
   )
 }
