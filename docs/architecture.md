@@ -167,16 +167,24 @@ erDiagram
 
 ## Chain Adapter System
 
-Each supported chain implements the `Rexplorer.Chain.Adapter` behaviour, providing chain-specific metadata and logic. The `Rexplorer.Chain.Registry` maps chain IDs to adapter modules at runtime.
+Each supported chain implements the `Rexplorer.Chain.Adapter` behaviour via the shared `Rexplorer.Chain.EVM` base module. OP Stack chains (Optimism, Base) additionally use `Rexplorer.Chain.OPStack` for L2-specific fields. The `Rexplorer.Chain.Registry` maps chain IDs to adapter modules at runtime.
 
 See [Chain Adapters](chain-adapters.md) for the full adapter documentation.
 
+## Decoder Pipeline
+
+The decoder pipeline runs as an async background worker with two parallel paths:
+- **Operation decoding**: calldata → ABI decode → unwrap (Safe/Multicall) → interpret → narrate → `decoded_summary`
+- **Event decoding**: logs → topic0 lookup → decode params → format summary → `logs.decoded` JSONB
+
+See [Decoder Pipeline](decoder-pipeline.md) and [Effects Composition](workflows/effects-composition.md).
+
 ## Supported Chains
 
-| Chain | Chain ID | Type | Native Token |
-|-------|----------|------|-------------|
-| Ethereum | 1 | L1 | ETH |
-| Optimism | 10 | Optimistic Rollup | ETH |
-| Base | 8453 | Optimistic Rollup | ETH |
-| BNB Smart Chain | 56 | Sidechain | BNB |
-| Polygon | 137 | Sidechain | POL |
+| Chain | Chain ID | Type | Native Token | Poll Interval |
+|-------|----------|------|-------------|---------------|
+| Ethereum | 1 | L1 | ETH | 12s |
+| Optimism | 10 | Optimistic Rollup | ETH | 2s |
+| Base | 8453 | Optimistic Rollup | ETH | 2s |
+| BNB Smart Chain | 56 | Sidechain | BNB | 3s |
+| Polygon | 137 | Sidechain | POL | 2s |

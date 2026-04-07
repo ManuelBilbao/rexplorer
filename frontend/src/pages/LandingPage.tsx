@@ -18,7 +18,7 @@ export function LandingPage() {
         🦕 rexplorer
       </h1>
       <p className="text-center text-rex-text-secondary mb-12">
-        Multi-chain blockchain explorer
+        Read the chain, not the hex
       </p>
 
       {isLoading ? (
