@@ -68,7 +68,9 @@ defmodule Rexplorer.Decoder.ABI do
     {"Repay(address,address,address,uint256,bool)", ["reserve", "user", "repayer", "amount", "useATokens"], [true, true, true, false, false]},
     # WETH
     {"Deposit(address,uint256)", ["dst", "wad"], [true, false]},
-    {"Withdrawal(address,uint256)", ["src", "wad"], [true, false]}
+    {"Withdrawal(address,uint256)", ["src", "wad"], [true, false]},
+    # Ethrex L2 Bridge
+    {"DepositProcessed(address,uint256)", ["recipient", "amount"], [true, false]}
   ]
 
   # Human-readable parameter names for signatures whose ABI.FunctionSelector

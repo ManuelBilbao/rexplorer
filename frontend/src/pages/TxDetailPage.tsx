@@ -9,6 +9,7 @@ import { linkifyAddresses } from '../lib/linkify'
 function actionIcon(summary: string | null): string {
   if (!summary) return '📝'
   const s = summary.toLowerCase()
+  if (s.includes('deposited') && s.includes('from l1')) return '⬇️'
   if (s.includes('swap')) return '🔀'
   if (s.includes('transfer')) return '→'
   if (s.includes('approv')) return '✓'
@@ -112,7 +113,7 @@ export function TxDetailPage() {
 
       {/* What Happened */}
       {(data.token_transfers.length > 0 || data.logs.some(l => l.decoded)) && (
-        <EffectsSection tokenTransfers={data.token_transfers} logs={data.logs} />
+        <EffectsSection tokenTransfers={data.token_transfers} logs={data.logs} depositSummary={mainSummary?.toLowerCase().includes('deposited') && mainSummary?.toLowerCase().includes('from l1') ? mainSummary : undefined} />
       )}
 
       {/* Details */}

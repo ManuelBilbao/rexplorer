@@ -22,7 +22,7 @@ defmodule RexplorerIndexer.Worker do
   import Ecto.Query, only: [from: 2]
 
   alias Rexplorer.{Repo, RPC.Client}
-  alias Rexplorer.Schema.{Block, Transaction, Operation, Log, TokenTransfer, Address}
+  alias Rexplorer.Schema.{Block, Batch, Transaction, Operation, Log, TokenTransfer, Address}
   alias RexplorerIndexer.BlockProcessor
 
   defstruct [:chain_id, :adapter, :rpc_url, :last_indexed_block, :last_block_hash, :polling]
@@ -125,6 +125,7 @@ defmodule RexplorerIndexer.Worker do
       case persist_block(result) do
         {:ok, _} ->
           broadcast_new_block(state.chain_id, result)
+          fetch_batch_info(state, target_block)
 
           new_state = %{state |
             last_indexed_block: target_block,
@@ -298,6 +299,99 @@ defmodule RexplorerIndexer.Worker do
   rescue
     _ -> :ok
   end
+
+  # Batch tracking for Ethrex (ZK rollup) chains
+
+  defp fetch_batch_info(%{adapter: adapter, rpc_url: rpc_url, chain_id: chain_id}, block_number) do
+    if adapter.chain_type() == :zk_rollup do
+      try do
+        case Client.ethrex_get_batch_by_block(rpc_url, block_number) do
+          {:ok, nil} ->
+            :ok
+
+          {:ok, batch_data} when is_map(batch_data) ->
+            batch_number = batch_data["batch_number"] || Client.hex_to_integer(batch_data["number"])
+            first_block = Client.hex_to_integer(batch_data["first_block"])
+            last_block = Client.hex_to_integer(batch_data["last_block"])
+            commit_tx = batch_data["commit_tx_hash"] || batch_data["commit_tx"]
+            verify_tx = batch_data["verify_tx_hash"] || batch_data["verify_tx"]
+
+            status =
+              cond do
+                verify_tx -> :verified
+                commit_tx -> :committed
+                true -> :sealed
+              end
+
+            if batch_number do
+              # Update block's chain_extra with batch_number
+              update_block_batch_number(chain_id, block_number, batch_number)
+
+              # Upsert batch record
+              upsert_batch(chain_id, batch_number, first_block, last_block, status, commit_tx, verify_tx)
+            end
+
+          {:error, _} ->
+            :ok
+        end
+      rescue
+        e ->
+          Logger.debug("[Indexer] Chain #{chain_id}: batch fetch failed for block #{block_number}: #{Exception.message(e)}")
+      end
+    end
+  end
+
+  defp update_block_batch_number(chain_id, block_number, batch_number) do
+    query =
+      from b in Block,
+        where: b.chain_id == ^chain_id and b.block_number == ^block_number
+
+    case Repo.one(query) do
+      nil -> :ok
+      block ->
+        chain_extra = Map.put(block.chain_extra || %{}, "batch_number", batch_number)
+        block |> Ecto.Changeset.change(%{chain_extra: chain_extra}) |> Repo.update()
+    end
+  rescue
+    _ -> :ok
+  end
+
+  defp upsert_batch(chain_id, batch_number, first_block, last_block, status, commit_tx, verify_tx) do
+    case Repo.get_by(Batch, chain_id: chain_id, batch_number: batch_number) do
+      nil ->
+        %Batch{}
+        |> Batch.changeset(%{
+          chain_id: chain_id,
+          batch_number: batch_number,
+          first_block: first_block,
+          last_block: last_block,
+          status: status,
+          commit_tx_hash: commit_tx,
+          verify_tx_hash: verify_tx
+        })
+        |> Repo.insert()
+
+      existing ->
+        # Update if status has progressed
+        attrs = %{}
+        attrs = if status_rank(status) > status_rank(existing.status), do: Map.put(attrs, :status, status), else: attrs
+        attrs = if commit_tx && !existing.commit_tx_hash, do: Map.put(attrs, :commit_tx_hash, commit_tx), else: attrs
+        attrs = if verify_tx && !existing.verify_tx_hash, do: Map.put(attrs, :verify_tx_hash, verify_tx), else: attrs
+
+        if attrs != %{} do
+          existing |> Ecto.Changeset.change(attrs) |> Repo.update()
+        else
+          {:ok, existing}
+        end
+    end
+  rescue
+    _ -> :ok
+  end
+
+  defp status_rank(:sealed), do: 0
+  defp status_rank(:committed), do: 1
+  defp status_rank(:verified), do: 2
+  defp status_rank(_), do: 0
 
   defp schedule_poll(_state, delay) do
     Process.send_after(self(), :poll, delay)

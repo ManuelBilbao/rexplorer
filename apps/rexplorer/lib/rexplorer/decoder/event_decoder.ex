@@ -196,6 +196,12 @@ defmodule Rexplorer.Decoder.EventDecoder do
     "WETH Withdrawal #{amount} ETH"
   end
 
+  defp format_summary("DepositProcessed", params, _contract_addr, _token_cache) do
+    recipient = truncate(params["recipient"])
+    amount = format_amount(params["amount"], %{decimals: 18})
+    "Deposited #{amount} ETH from L1 to #{recipient}"
+  end
+
   defp format_summary(event_name, _params, contract_addr, _token_cache) do
     "#{event_name} on #{truncate(contract_addr)}"
   end

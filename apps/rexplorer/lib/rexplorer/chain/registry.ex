@@ -50,6 +50,7 @@ defmodule Rexplorer.Chain.Registry do
 
   @impl true
   def init(opts) do
+    # Load hardcoded adapters
     adapters = Keyword.get(opts, :adapters) || load_adapters_from_config()
 
     adapter_map =
@@ -57,7 +58,18 @@ defmodule Rexplorer.Chain.Registry do
       |> Enum.map(fn mod -> {mod.chain_id(), mod} end)
       |> Map.new()
 
-    {:ok, %{adapters: adapter_map}}
+    # Load config-driven Ethrex adapters
+    ethrex_adapters = load_ethrex_adapters()
+
+    ethrex_map =
+      ethrex_adapters
+      |> Enum.map(fn mod -> {mod.chain_id(), mod} end)
+      |> Map.new()
+
+    # Auto-seed Ethrex chain records in DB
+    seed_ethrex_chains(ethrex_adapters)
+
+    {:ok, %{adapters: Map.merge(adapter_map, ethrex_map)}}
   end
 
   @impl true
@@ -98,5 +110,43 @@ defmodule Rexplorer.Chain.Registry do
   defp load_adapters_from_config do
     Application.get_env(:rexplorer, __MODULE__, [])
     |> Keyword.get(:adapters, [])
+  end
+
+  defp load_ethrex_adapters do
+    Application.get_env(:rexplorer, :ethrex_chains, [])
+    |> Enum.map(fn config ->
+      config = if is_map(config), do: Enum.into(config, []), else: config
+      Rexplorer.Chain.Ethrex.create_adapter(config)
+    end)
+  end
+
+  defp seed_ethrex_chains(adapters) do
+    Enum.each(adapters, fn mod ->
+      chain_id = mod.chain_id()
+      {symbol, _decimals} = mod.native_token()
+
+      # Generate explorer_slug from chain_id
+      slug = "ethrex-#{chain_id}"
+
+      try do
+        case Rexplorer.Repo.get(Rexplorer.Schema.Chain, chain_id) do
+          nil ->
+            %Rexplorer.Schema.Chain{}
+            |> Rexplorer.Schema.Chain.changeset(%{
+              chain_id: chain_id,
+              name: "Ethrex #{chain_id}",
+              chain_type: :zk_rollup,
+              native_token_symbol: symbol,
+              explorer_slug: slug
+            })
+            |> Rexplorer.Repo.insert!()
+
+          _existing ->
+            :ok
+        end
+      rescue
+        _ -> :ok
+      end
+    end)
   end
 end

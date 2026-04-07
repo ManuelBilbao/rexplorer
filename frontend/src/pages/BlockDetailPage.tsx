@@ -77,28 +77,50 @@ export function BlockDetailPage() {
               </tr>
             </thead>
             <tbody>
-              {txData.data.map(tx => (
-                <tr key={tx.hash} className="border-b border-rex-border">
-                  <td className="px-4 py-2">
-                    <Link to={`/${chain}/tx/${tx.hash}`} className="text-rex-primary hover:underline font-mono">
-                      {tx.hash.slice(0, 10)}...
-                    </Link>
-                  </td>
-                  <td className="px-4 py-2 font-mono text-xs">
-                    <Link to={`/${chain}/address/${tx.from_address}`} className="text-rex-primary hover:underline">{tx.from_address.slice(0, 10)}...</Link>
-                  </td>
-                  <td className="px-4 py-2 font-mono text-xs">
-                    {tx.to_address ? (
-                      <Link to={`/${chain}/address/${tx.to_address}`} className="text-rex-primary hover:underline">{tx.to_address.slice(0, 10)}...</Link>
-                    ) : 'Contract Creation'}
-                  </td>
-                  <td className="px-4 py-2 text-right font-mono">{tx.value === '0' ? '0' : tx.value}</td>
-                </tr>
-              ))}
+              {txData.data.map(tx => {
+                const isDeposit = isLikelyDeposit(tx)
+
+                return (
+                  <tr key={tx.hash} className="border-b border-rex-border">
+                    <td className="px-4 py-2">
+                      <Link to={`/${chain}/tx/${tx.hash}`} className="text-rex-primary hover:underline font-mono">
+                        {tx.hash.slice(0, 10)}...
+                      </Link>
+                    </td>
+                    <td className="px-4 py-2 font-mono text-xs" colSpan={isDeposit ? 2 : 1}>
+                      {isDeposit ? (
+                        <span className="text-rex-text-secondary">⬇️ L1 Deposit</span>
+                      ) : (
+                        <Link to={`/${chain}/address/${tx.from_address}`} className="text-rex-primary hover:underline">{tx.from_address.slice(0, 10)}...</Link>
+                      )}
+                    </td>
+                    {!isDeposit && (
+                      <td className="px-4 py-2 font-mono text-xs">
+                        {tx.to_address ? (
+                          <Link to={`/${chain}/address/${tx.to_address}`} className="text-rex-primary hover:underline">{tx.to_address.slice(0, 10)}...</Link>
+                        ) : 'Contract Creation'}
+                      </td>
+                    )}
+                    <td className="px-4 py-2 text-right font-mono">{tx.value === '0' ? '0' : tx.value}</td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>
       )}
     </div>
   )
+}
+
+// Detect L1 deposits: from and to are both the zero/bridge address
+function isLikelyDeposit(tx: { from_address: string; to_address: string | null }): boolean {
+  const from = tx.from_address?.toLowerCase() || ''
+  const to = tx.to_address?.toLowerCase() || ''
+  const isBridgeOrZero = (addr: string) =>
+    addr === '0x0000000000000000000000000000000000000000' ||
+    addr.endsWith('ffff') ||
+    /^0x0{30,}/.test(addr)
+
+  return isBridgeOrZero(from) && isBridgeOrZero(to)
 }

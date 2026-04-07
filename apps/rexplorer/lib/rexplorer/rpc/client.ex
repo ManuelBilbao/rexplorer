@@ -76,6 +76,26 @@ defmodule Rexplorer.RPC.Client do
     call(url, "eth_getBlockReceipts", [integer_to_hex(block_number)])
   end
 
+  # Ethrex-specific RPC methods
+
+  @doc "Returns batch info for a given block number on an Ethrex chain."
+  def ethrex_get_batch_by_block(url, block_number) do
+    call(url, "ethrex_getBatchByBlock", [integer_to_hex(block_number)])
+  end
+
+  @doc "Returns batch details by batch number on an Ethrex chain."
+  def ethrex_get_batch_by_number(url, batch_number) do
+    call(url, "ethrex_getBatchByNumber", [integer_to_hex(batch_number), false])
+  end
+
+  @doc "Returns the latest batch number on an Ethrex chain."
+  def ethrex_batch_number(url) do
+    case call(url, "ethrex_batchNumber") do
+      {:ok, hex} -> {:ok, hex_to_integer(hex)}
+      error -> error
+    end
+  end
+
   # Hex encoding/decoding helpers
 
   @doc "Converts a hex string (with 0x prefix) to an integer."

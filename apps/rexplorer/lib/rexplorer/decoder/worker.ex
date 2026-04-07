@@ -53,7 +53,7 @@ defmodule Rexplorer.Decoder.Worker do
       from(o in Operation,
         where: is_nil(o.decoder_version) or o.decoder_version < ^version,
         limit: ^@batch_size,
-        select: o
+        preload: [:transaction]
       )
       |> Repo.all()
 

@@ -93,7 +93,9 @@ defmodule RexplorerIndexer.BlockProcessor do
 
   @doc "Extracts transaction attributes from raw RPC transaction + receipt data."
   def extract_transaction(raw_tx, receipt, chain_id, adapter) do
-    chain_extra = extract_chain_extra(raw_tx, adapter.transaction_fields())
+    chain_extra =
+      extract_chain_extra(raw_tx, adapter.transaction_fields())
+      |> enrich_tx_chain_extra(raw_tx)
 
     %{
       chain_id: chain_id,
@@ -219,6 +221,22 @@ defmodule RexplorerIndexer.BlockProcessor do
 
   defp downcase(nil), do: nil
   defp downcase(s) when is_binary(s), do: String.downcase(s)
+
+  # Derive computed chain_extra fields from raw tx data
+  defp enrich_tx_chain_extra(chain_extra, _raw_tx) when chain_extra == %{}, do: chain_extra
+
+  defp enrich_tx_chain_extra(chain_extra, raw_tx) do
+    tx_type = Client.hex_to_integer(raw_tx["type"])
+
+    chain_extra
+    |> maybe_put(:is_privileged, tx_type == 0x7E)
+    |> maybe_put(:fee_token, if(tx_type == 0x7D, do: downcase(raw_tx["feeToken"]), else: nil))
+    |> maybe_put(:l1_origin_hash, raw_tx["sourceHash"] || raw_tx["l1OriginHash"])
+  end
+
+  defp maybe_put(map, _key, nil), do: map
+  defp maybe_put(map, key, false), do: Map.put(map, key, false)
+  defp maybe_put(map, key, value), do: Map.put(map, key, value)
 
   defp extract_chain_extra(_raw, []), do: %{}
 

@@ -6,6 +6,7 @@ import type { TokenTransfer, Log } from '../../api/types'
 interface EffectsSectionProps {
   tokenTransfers: TokenTransfer[]
   logs: Log[]
+  depositSummary?: string
 }
 
 interface DecodedLog {
@@ -14,7 +15,7 @@ interface DecodedLog {
   summary: string
 }
 
-export function EffectsSection({ tokenTransfers, logs }: EffectsSectionProps) {
+export function EffectsSection({ tokenTransfers, logs, depositSummary }: EffectsSectionProps) {
   const chain = useChain()
 
   const decodedLogs = logs
@@ -22,8 +23,10 @@ export function EffectsSection({ tokenTransfers, logs }: EffectsSectionProps) {
     .map((log) => log.decoded as unknown as DecodedLog)
 
   const hasDecodedTransfers = decodedLogs.some((dl) => dl.event_name === 'Transfer')
+  const hasDecodedDeposit = decodedLogs.some((dl) => dl.event_name === 'DepositProcessed')
   const showRawTransfers = !hasDecodedTransfers && tokenTransfers.length > 0
-  const hasEffects = decodedLogs.length > 0 || showRawTransfers
+  const rawTransfers = showRawTransfers ? tokenTransfers.filter((t) => !(hasDecodedDeposit && isDepositTransfer(t))) : []
+  const hasEffects = decodedLogs.length > 0 || rawTransfers.length > 0
 
   if (!hasEffects) {
     return (
@@ -49,21 +52,33 @@ export function EffectsSection({ tokenTransfers, logs }: EffectsSectionProps) {
           </div>
         ))}
 
-        {showRawTransfers && tokenTransfers.map((t, i) => (
-          <div key={`xfer-${i}`} className="flex items-center gap-3 text-sm px-5 py-3">
-            <span className="text-base shrink-0">→</span>
-            <span className="text-rex-text">
-              {formatTransferAmount(t)} {tokenLabel(t, chain)}{' '}
-              <Link to={`/${chain}/address/${t.from_address}`} className="text-rex-primary hover:underline font-mono">
-                {t.from_address.slice(0, 6)}...{t.from_address.slice(-4)}
-              </Link>
-              {' → '}
-              <Link to={`/${chain}/address/${t.to_address}`} className="text-rex-primary hover:underline font-mono">
-                {t.to_address.slice(0, 6)}...{t.to_address.slice(-4)}
-              </Link>
-            </span>
-          </div>
-        ))}
+        {rawTransfers.map((t, i) => {
+          const deposit = isDepositTransfer(t)
+
+          return (
+            <div key={`xfer-${i}`} className="flex items-center gap-3 text-sm px-5 py-3">
+              <span className="text-base shrink-0">{deposit ? '⬇️' : '→'}</span>
+              <span className="text-rex-text">
+                {deposit && depositSummary ? (
+                  <>{linkifyAddresses(depositSummary, chain)}</>
+                ) : deposit ? (
+                  <>L1 Deposit: {formatTransferAmount(t)} {tokenLabel(t, chain)}</>
+                ) : (
+                  <>
+                    {formatTransferAmount(t)} {tokenLabel(t, chain)}{' '}
+                    <Link to={`/${chain}/address/${t.from_address}`} className="text-rex-primary hover:underline font-mono">
+                      {t.from_address.slice(0, 6)}...{t.from_address.slice(-4)}
+                    </Link>
+                    {' → '}
+                    <Link to={`/${chain}/address/${t.to_address}`} className="text-rex-primary hover:underline font-mono">
+                      {t.to_address.slice(0, 6)}...{t.to_address.slice(-4)}
+                    </Link>
+                  </>
+                )}
+              </span>
+            </div>
+          )
+        })}
       </div>
     </div>
   )
@@ -105,6 +120,15 @@ function formatWithDecimals(raw: string, decimals: number): string {
   }
 }
 
+function isDepositTransfer(t: TokenTransfer): boolean {
+  const isBridgeOrZero = (addr: string) =>
+    addr === '0x0000000000000000000000000000000000000000' ||
+    addr.toLowerCase().endsWith('ffff') ||
+    /^0x0{30,}/.test(addr)
+
+  return t.token_type === 'native' && isBridgeOrZero(t.from_address) && isBridgeOrZero(t.to_address)
+}
+
 function tokenLabel(t: TokenTransfer, chain: string | null): string {
   if (t.token_type === 'native') {
     return NATIVE_SYMBOLS[chain || ''] || 'ETH'
@@ -117,6 +141,7 @@ function eventIcon(eventName: string): string {
     case 'Transfer': return '→'
     case 'Approval': return '✓'
     case 'Swap': return '↔'
+    case 'DepositProcessed': return '⬇️'
     case 'Supply': case 'Deposit': return '↓'
     case 'Withdraw': case 'Withdrawal': return '↑'
     case 'Borrow': return '↓'

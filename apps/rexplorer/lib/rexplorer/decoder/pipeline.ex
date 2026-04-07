@@ -24,22 +24,27 @@ defmodule Rexplorer.Decoder.Pipeline do
   Returns `{:ok, summary_string}` or `{:error, reason}`.
   """
   def decode_operation(operation, token_cache) do
-    input = operation.input
-    to_address = operation.to_address
-    chain_id = operation.chain_id
-    operation_type = get_operation_type(operation)
+    # Check for Ethrex privileged (deposit) transactions first
+    if privileged_deposit?(operation) do
+      {:ok, narrate_deposit(operation)}
+    else
+      input = operation.input
+      to_address = operation.to_address
+      chain_id = operation.chain_id
+      operation_type = get_operation_type(operation)
 
-    tx_context = %{
-      from_address: operation.from_address,
-      to_address: to_address,
-      value: decimal_to_integer(operation.value)
-    }
+      tx_context = %{
+        from_address: operation.from_address,
+        to_address: to_address,
+        value: decimal_to_integer(operation.value)
+      }
 
-    inner_summary = decode_inner(input, to_address, tx_context, chain_id, token_cache)
+      inner_summary = decode_inner(input, to_address, tx_context, chain_id, token_cache)
 
-    case inner_summary do
-      {:ok, summary} -> {:ok, wrap_with_context(summary, operation_type, operation.from_address)}
-      {:error, reason} -> {:error, reason}
+      case inner_summary do
+        {:ok, summary} -> {:ok, wrap_with_context(summary, operation_type, operation.from_address)}
+        {:error, reason} -> {:error, reason}
+      end
     end
   end
 
@@ -109,5 +114,39 @@ defmodule Rexplorer.Decoder.Pipeline do
     end
   end
 
+  # Ethrex privileged deposit detection and narration
 
+  # mintETH(address) selector
+  @mint_eth_selector <<0xB0, 0xF4, 0xD3, 0x95>>
+
+  defp privileged_deposit?(operation) do
+    chain_extra = get_chain_extra(operation)
+    is_privileged = chain_extra["is_privileged"] || chain_extra[:is_privileged]
+    input = operation.input
+
+    is_privileged == true and is_binary(input) and byte_size(input) >= 4 and
+      binary_part(input, 0, 4) == @mint_eth_selector
+  end
+
+  defp narrate_deposit(operation) do
+    input = operation.input
+    value = decimal_to_integer(operation.value)
+    symbol = native_token_symbol(operation.chain_id)
+    amount = Narrator.format_native_amount(value)
+
+    # Extract recipient: mintETH(address) — address is the ABI-encoded param (last 20 bytes of 32-byte word)
+    recipient =
+      if byte_size(input) >= 36 do
+        addr_bytes = binary_part(input, 16, 20)
+        "0x" <> Base.encode16(addr_bytes, case: :lower)
+      else
+        "unknown"
+      end
+
+    "Deposited #{amount} #{symbol} from L1 to #{recipient}"
+  end
+
+  defp get_chain_extra(%{transaction: %{chain_extra: extra}}) when is_map(extra), do: extra
+  defp get_chain_extra(%{chain_extra: extra}) when is_map(extra), do: extra
+  defp get_chain_extra(_), do: %{}
 end
