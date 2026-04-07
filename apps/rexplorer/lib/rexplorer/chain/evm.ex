@@ -97,7 +97,10 @@ defmodule Rexplorer.Chain.EVM do
 
   defp extract_erc20_transfers(_), do: []
 
-  defp erc20_transfer?(%{topic0: topic0}) when topic0 == @erc20_transfer_topic, do: true
+  defp erc20_transfer?(%{topic0: topic0, topic1: t1, topic2: t2})
+       when topic0 == @erc20_transfer_topic and not is_nil(t1) and not is_nil(t2),
+       do: true
+
   defp erc20_transfer?(_), do: false
 
   defp decode_erc20_transfer(log) do
