@@ -18,7 +18,7 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { useChain } from '../hooks/useChain'
-import { useAddressOverview, useBalanceHistory, useTransactions, useAddressTokenTransfers } from '../api/queries'
+import { useAddressOverview, useBalanceHistory, useTransactions, useAddressTokenTransfers, useAddressInternalTransactions } from '../api/queries'
 import { BalanceChart } from '../components/explorer/BalanceChart'
 import { Tabs, TabList, Tab, TabPanel } from '../components/ui/Tabs'
 import { timeAgo } from '../lib/format'
@@ -86,10 +86,11 @@ export function AddressPage() {
         )}
       </div>
 
-      {/* Tabbed Transactions / Token Transfers */}
+      {/* Tabbed Transactions / Internal Txns / Token Transfers */}
       <Tabs>
         <TabList>
           <Tab>Transactions</Tab>
+          <Tab>Internal Txns</Tab>
           <Tab>Token Transfers</Tab>
         </TabList>
 
@@ -102,6 +103,10 @@ export function AddressPage() {
         </TabPanel>
 
         <TabPanel index={1}>
+          <InternalTransactionsList chain={chain} hash={hash!} />
+        </TabPanel>
+
+        <TabPanel index={2}>
           <TokenTransfersList
             chain={chain}
             hash={hash!}
@@ -283,6 +288,76 @@ function TokenTransfersList({ chain, hash, initialTransfers }: TransferListProps
   )
 }
 
+/* ── Internal Transactions List ── */
+
+function InternalTransactionsList({ chain, hash }: { chain: string | null; hash: string }) {
+  const [cursor, setCursor] = useState<number | undefined>(undefined)
+  const { data, isFetching } = useAddressInternalTransactions(chain, hash, cursor)
+
+  const entries = data?.data || []
+  const [allEntries, setAllEntries] = useState<typeof entries>([])
+
+  // Initialize or append
+  if (entries.length > 0 && !cursor && allEntries.length === 0) {
+    setAllEntries(entries)
+  }
+
+  if (entries.length > 0 && cursor) {
+    const newEntries = entries.filter(
+      e => !allEntries.some(a => a.transaction_hash === e.transaction_hash && a.trace_index === e.trace_index)
+    )
+    if (newEntries.length > 0) {
+      setAllEntries(prev => [...prev, ...newEntries])
+      setCursor(undefined)
+    }
+  }
+
+  if (!isFetching && allEntries.length === 0 && entries.length === 0) {
+    return <p className="text-sm text-rex-text-secondary">No internal transactions found</p>
+  }
+
+  const displayEntries = allEntries.length > 0 ? allEntries : entries
+
+  return (
+    <div>
+      <div className="space-y-2 text-sm">
+        {displayEntries.map((entry, i) => (
+          <div key={`${entry.transaction_hash}-${entry.trace_index}`} className="flex items-center justify-between gap-2">
+            <Link to={`/${chain}/tx/${entry.transaction_hash}`} className="text-rex-primary hover:underline font-mono shrink-0">
+              {entry.transaction_hash.slice(0, 10)}...{entry.transaction_hash.slice(-6)}
+            </Link>
+            <div className="text-rex-text-secondary text-xs font-mono truncate">
+              <Link to={`/${chain}/address/${entry.from_address}`} className="hover:text-rex-primary">{entry.from_address.slice(0, 8)}...</Link>
+              {' \u2192 '}
+              {entry.to_address ? (
+                <Link to={`/${chain}/address/${entry.to_address}`} className="hover:text-rex-primary">{entry.to_address.slice(0, 8)}...</Link>
+              ) : 'Create'}
+            </div>
+            <span className="text-rex-text text-xs font-mono shrink-0">
+              {formatInternalValue(entry.value, chain)}
+            </span>
+            <span className="px-2 py-0.5 text-xs rounded bg-rex-bg-tertiary text-rex-text-secondary shrink-0">
+              {entry.call_type}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {data?.next_cursor && (
+        <div className="mt-4 text-center">
+          <button
+            onClick={() => setCursor(data.next_cursor as number)}
+            disabled={isFetching}
+            className="px-4 py-2 text-sm border border-rex-border rounded-lg text-rex-text hover:bg-rex-bg-secondary transition-colors disabled:opacity-50"
+          >
+            {isFetching ? 'Loading...' : 'Load more'}
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 /* ── Formatting helpers ── */
 
 function formatBalance(balanceWei: string | null, chain: string | null): string {
@@ -318,6 +393,26 @@ function formatTransferAmount(t: { amount: string; token_type: string }): string
     } catch { return t.amount }
   }
   return t.amount
+}
+
+function formatInternalValue(valueWei: string, chain: string | null): string {
+  try {
+    const num = BigInt(valueWei)
+    if (num === 0n) return `0 ${nativeSymbol(chain)}`
+    const divisor = BigInt(10 ** 18)
+    const whole = num / divisor
+    const remainder = num % divisor
+    let formatted: string
+    if (remainder === 0n) {
+      formatted = whole.toLocaleString()
+    } else {
+      const fracStr = remainder.toString().padStart(18, '0').replace(/0+$/, '').slice(0, 6)
+      formatted = `${whole.toLocaleString()}.${fracStr}`
+    }
+    return `${formatted} ${nativeSymbol(chain)}`
+  } catch {
+    return valueWei
+  }
 }
 
 const NATIVE_SYMBOLS: Record<string, string> = {

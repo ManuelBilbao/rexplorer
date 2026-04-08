@@ -65,6 +65,17 @@ export interface BalanceHistoryEntry {
   timestamp: string
 }
 
+export interface InternalTransaction {
+  transaction_hash: string
+  block_number: number
+  trace_index: number
+  from_address: string
+  to_address: string | null
+  value: string
+  call_type: string
+  trace_address: number[]
+}
+
 export interface CrossChainLink {
   source_chain_id: number
   source_tx_hash: string

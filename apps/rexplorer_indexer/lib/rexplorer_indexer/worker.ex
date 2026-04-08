@@ -22,8 +22,8 @@ defmodule RexplorerIndexer.Worker do
   import Ecto.Query, only: [from: 2]
 
   alias Rexplorer.{Repo, RPC.Client}
-  alias Rexplorer.Schema.{Block, Batch, Transaction, Operation, Log, TokenTransfer, Address, BalanceChange}
-  alias RexplorerIndexer.{BlockProcessor, BalanceCollector}
+  alias Rexplorer.Schema.{Block, Batch, Transaction, Operation, Log, TokenTransfer, Address, BalanceChange, InternalTransaction}
+  alias RexplorerIndexer.{BlockProcessor, BalanceCollector, TraceFlattener}
 
   defstruct [:chain_id, :adapter, :rpc_url, :last_indexed_block, :last_block_hash, :polling]
 
@@ -122,14 +122,17 @@ defmodule RexplorerIndexer.Worker do
          {:ok, receipts} <- Client.get_block_receipts(state.rpc_url, target_block) do
       result = BlockProcessor.process_block(raw_block, receipts, state.adapter)
 
-      # Collect balance changes for all touched addresses
-      touched = BalanceCollector.collect_touched_addresses(state.adapter, state.rpc_url, raw_block)
+      # Collect balance changes and internal transactions from traces
+      {touched, raw_traces} = BalanceCollector.collect_touched_addresses(state.adapter, state.rpc_url, raw_block)
       block_timestamp = parse_block_timestamp(raw_block["timestamp"])
 
       {balance_changes, address_updates} =
         BalanceCollector.fetch_balances(state.rpc_url, state.chain_id, target_block, touched, block_timestamp)
 
-      case persist_block(result, balance_changes, address_updates) do
+      # Extract internal transactions from the same trace data
+      internal_txs = build_internal_transactions(raw_traces, state.chain_id, target_block)
+
+      case persist_block(result, balance_changes, address_updates, internal_txs) do
         {:ok, _} ->
           broadcast_new_block(state.chain_id, result)
           broadcast_balance_changes(state.chain_id, address_updates)
@@ -187,7 +190,7 @@ defmodule RexplorerIndexer.Worker do
     end
   end
 
-  defp persist_block(result, balance_changes, address_updates) do
+  defp persist_block(result, balance_changes, address_updates, internal_txs) do
     Repo.transaction(fn ->
       # Insert block
       block =
@@ -272,6 +275,11 @@ defmodule RexplorerIndexer.Worker do
       # Insert balance changes
       if balance_changes != [] do
         Repo.insert_all(BalanceChange, balance_changes, on_conflict: :nothing)
+      end
+
+      # Insert internal transactions
+      if internal_txs != [] do
+        Repo.insert_all(InternalTransaction, internal_txs, on_conflict: :nothing)
       end
 
       # Update current_balance_wei on addresses
@@ -433,6 +441,20 @@ defmodule RexplorerIndexer.Worker do
   defp status_rank(:committed), do: 1
   defp status_rank(:verified), do: 2
   defp status_rank(_), do: 0
+
+  defp build_internal_transactions(raw_traces, chain_id, block_number) do
+    now = NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second)
+
+    raw_traces
+    |> TraceFlattener.flatten_to_entries()
+    |> Enum.map(fn entry ->
+      entry
+      |> Map.put(:chain_id, chain_id)
+      |> Map.put(:block_number, block_number)
+      |> Map.put(:inserted_at, now)
+      |> Map.put(:updated_at, now)
+    end)
+  end
 
   defp broadcast_balance_changes(chain_id, address_updates) do
     Enum.each(address_updates, fn {address_hash, balance_wei} ->

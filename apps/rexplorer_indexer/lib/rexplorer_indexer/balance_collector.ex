@@ -61,25 +61,25 @@ defmodule RexplorerIndexer.BalanceCollector do
 
   Returns a `MapSet` of lowercase hex addresses.
   """
-  @spec collect_touched_addresses(module(), String.t(), map()) :: MapSet.t(String.t())
+  @spec collect_touched_addresses(module(), String.t(), map()) :: {MapSet.t(String.t()), list()}
   def collect_touched_addresses(adapter, rpc_url, raw_block) do
     block_number = Client.hex_to_integer(raw_block["number"])
 
-    trace_addresses =
+    {trace_addresses, raw_traces} =
       if adapter.supports_traces?() do
         case Client.trace_block(rpc_url, block_number) do
           {:ok, traces} when is_list(traces) ->
-            TraceFlattener.flatten_traces(traces)
+            {TraceFlattener.flatten_traces(traces), traces}
 
           {:error, reason} ->
             Logger.warning(
               "[BalanceCollector] Trace call failed for block #{block_number}: #{inspect(reason)}, falling back to tx-only"
             )
 
-            MapSet.new()
+            {MapSet.new(), []}
         end
       else
-        MapSet.new()
+        {MapSet.new(), []}
       end
 
     tx_addresses =
@@ -98,10 +98,13 @@ defmodule RexplorerIndexer.BalanceCollector do
       |> Map.get("withdrawals", [])
       |> Enum.reduce(MapSet.new(), fn w, acc -> maybe_add(acc, w["address"]) end)
 
-    trace_addresses
-    |> MapSet.union(tx_addresses)
-    |> MapSet.union(miner_address)
-    |> MapSet.union(withdrawal_addresses)
+    all_addresses =
+      trace_addresses
+      |> MapSet.union(tx_addresses)
+      |> MapSet.union(miner_address)
+      |> MapSet.union(withdrawal_addresses)
+
+    {all_addresses, raw_traces}
   end
 
   @doc """

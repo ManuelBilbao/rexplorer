@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { fetchApi } from './client'
-import type { Chain, Block, HomeData, TxDetail, AddressOverview, SearchResult, PaginatedResponse, Transaction, BalanceHistoryEntry, TokenTransfer } from './types'
+import type { Chain, Block, HomeData, TxDetail, AddressOverview, SearchResult, PaginatedResponse, Transaction, BalanceHistoryEntry, TokenTransfer, InternalTransaction } from './types'
 
 export function useChains() {
   return useQuery({
@@ -86,6 +86,20 @@ export function useAddressTokenTransfers(chain: string | null, hash: string | un
     queryKey: ['addressTokenTransfers', chain, hash, before],
     queryFn: () => fetchApi<PaginatedResponse<TokenTransfer>>(
       `/api/v1/chains/${chain}/addresses/${hash}/token-transfers?${qs}`
+    ),
+    enabled: !!chain && !!hash,
+  })
+}
+
+export function useAddressInternalTransactions(chain: string | null, hash: string | undefined, before?: number) {
+  const params = new URLSearchParams({ limit: '25' })
+  if (before) params.set('before', String(before))
+  const qs = params.toString()
+
+  return useQuery({
+    queryKey: ['addressInternalTxs', chain, hash, before],
+    queryFn: () => fetchApi<PaginatedResponse<InternalTransaction>>(
+      `/internal/chains/${chain}/addresses/${hash}/internal-transactions?${qs}`
     ),
     enabled: !!chain && !!hash,
   })
