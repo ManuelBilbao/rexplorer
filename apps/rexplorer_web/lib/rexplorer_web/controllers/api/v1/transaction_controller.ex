@@ -72,6 +72,7 @@ defmodule RexplorerWeb.API.V1.TransactionController do
   defp parse_tx_pagination(params) do
     opts = []
     opts = if params["address"], do: [{:address, params["address"]} | opts], else: opts
+    opts = if params["block_number"], do: [{:block_number, parse_int(params["block_number"])} | opts], else: opts
     opts = if params["before_block"], do: [{:before_block, parse_int(params["before_block"])} | opts], else: opts
     opts = if params["before_index"], do: [{:before_index, parse_int(params["before_index"])} | opts], else: opts
     opts = if params["limit"], do: [{:limit, parse_int(params["limit"])} | opts], else: opts

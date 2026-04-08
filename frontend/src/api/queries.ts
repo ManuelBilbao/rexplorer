@@ -30,9 +30,10 @@ export function useBlocks(chain: string | null, before?: number) {
   })
 }
 
-export function useTransactions(chain: string | null, opts?: { address?: string; beforeBlock?: number }) {
+export function useTransactions(chain: string | null, opts?: { address?: string; blockNumber?: number; beforeBlock?: number }) {
   const params = new URLSearchParams({ limit: '25' })
   if (opts?.address) params.set('address', opts.address)
+  if (opts?.blockNumber) params.set('block_number', String(opts.blockNumber))
   if (opts?.beforeBlock) params.set('before_block', String(opts.beforeBlock))
   const qs = params.toString()
 

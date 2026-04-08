@@ -7,7 +7,7 @@ export function BlockDetailPage() {
   const chain = useChain()
   const { number } = useParams()
   const { data: block, isLoading } = useBlock(chain, number)
-  const { data: txData } = useTransactions(chain, { beforeBlock: number ? Number(number) + 1 : undefined })
+  const { data: txData } = useTransactions(chain, { blockNumber: number ? Number(number) : undefined })
 
   if (isLoading) {
     return <div className="space-y-4">

@@ -56,6 +56,7 @@ defmodule Rexplorer.Transactions do
 
   Options:
   - `:address` — filter by address (as sender or recipient)
+  - `:block_number` — filter to a specific block (exact match)
   - `:before_block` — block_number part of cursor
   - `:before_index` — transaction_index part of cursor
   - `:limit` — max results (default 25, max 100)
@@ -63,6 +64,7 @@ defmodule Rexplorer.Transactions do
   def list_transactions(chain_id, opts \\ []) do
     limit = min(opts[:limit] || @default_limit, @max_limit)
     address = opts[:address]
+    block_number = opts[:block_number]
     before_block = opts[:before_block]
     before_index = opts[:before_index]
 
@@ -73,6 +75,13 @@ defmodule Rexplorer.Transactions do
         order_by: [desc: b.block_number, desc: t.transaction_index],
         limit: ^(limit + 1),
         preload: [block: b]
+
+    query =
+      if block_number do
+        where(query, [t, b], b.block_number == ^block_number)
+      else
+        query
+      end
 
     query =
       if address do
