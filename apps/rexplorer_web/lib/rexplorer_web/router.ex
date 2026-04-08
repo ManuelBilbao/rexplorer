@@ -39,6 +39,7 @@ defmodule RexplorerWeb.Router do
       scope "/addresses/:address_hash" do
         get "/", AddressController, :show
         get "/token-transfers", TokenTransferController, :index
+        get "/balance-history", BalanceHistoryController, :index
       end
     end
   end
@@ -53,6 +54,7 @@ defmodule RexplorerWeb.Router do
       get "/home", HomeController, :show
       get "/transactions/:hash", TransactionDetailController, :show
       get "/addresses/:address_hash", AddressOverviewController, :show
+      get "/addresses/:address_hash/balance-history", BalanceHistoryController, :index
     end
   end
 end

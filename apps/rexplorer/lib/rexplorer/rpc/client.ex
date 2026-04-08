@@ -24,8 +24,12 @@ defmodule Rexplorer.RPC.Client do
 
   Returns `{:ok, result}` on success, `{:error, %{code: integer, message: string}}`
   for JSON-RPC errors, or `{:error, reason}` for network failures.
+
+  ## Example
+
+      {:ok, "0x1"} = Client.call("http://localhost:8545", "eth_blockNumber")
   """
-  def call(url, method, params \\ []) do
+  def call(url, method, params \\ [], opts \\ []) do
     body = %{
       "jsonrpc" => "2.0",
       "id" => 1,
@@ -33,7 +37,9 @@ defmodule Rexplorer.RPC.Client do
       "params" => params
     }
 
-    case Req.post(url, json: body) do
+    timeout = opts[:timeout] || 30_000
+
+    case Req.post(url, json: body, receive_timeout: timeout) do
       {:ok, %Req.Response{status: 200, body: %{"result" => result}}} ->
         {:ok, result}
 
@@ -74,6 +80,44 @@ defmodule Rexplorer.RPC.Client do
   """
   def get_block_receipts(url, block_number) do
     call(url, "eth_getBlockReceipts", [integer_to_hex(block_number)])
+  end
+
+  # Balance and trace methods
+
+  @doc """
+  Returns the native token balance (in wei) for an address at a given block number.
+
+  Calls `eth_getBalance(address, blockNumber)`. The block number is hex-encoded
+  per the JSON-RPC spec.
+
+  ## Example
+
+      {:ok, 1_000_000_000_000_000_000} = Client.get_balance(url, "0xabc...", 100)
+  """
+  def get_balance(url, address, block_number) do
+    case call(url, "eth_getBalance", [address, integer_to_hex(block_number)]) do
+      {:ok, hex} -> {:ok, hex_to_integer(hex)}
+      error -> error
+    end
+  end
+
+  @doc """
+  Traces all transactions in a block using the `callTracer` tracer.
+
+  Calls `debug_traceBlockByNumber(blockNumber, {"tracer": "callTracer"})`.
+  Returns a list of `%{"txHash" => ..., "result" => call_frame}` maps where
+  each call frame contains nested `"calls"` with `from`, `to`, `value`, and `type`.
+
+  ## Example
+
+      {:ok, traces} = Client.trace_block(url, 100)
+      # traces = [%{"txHash" => "0x...", "result" => %{"type" => "CALL", ...}}, ...]
+  """
+  def trace_block(url, block_number) do
+    call(url, "debug_traceBlockByNumber", [
+      block_number,
+      %{"tracer" => "callTracer"}
+    ])
   end
 
   # Ethrex-specific RPC methods

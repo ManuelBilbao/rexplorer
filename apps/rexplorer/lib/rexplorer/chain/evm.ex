@@ -50,11 +50,15 @@ defmodule Rexplorer.Chain.EVM do
       @impl true
       def bridge_contracts, do: []
 
+      @impl true
+      def supports_traces?, do: false
+
       defoverridable extract_operations: 1,
                      extract_token_transfers: 1,
                      block_fields: 0,
                      transaction_fields: 0,
-                     bridge_contracts: 0
+                     bridge_contracts: 0,
+                     supports_traces?: 0
     end
   end
 

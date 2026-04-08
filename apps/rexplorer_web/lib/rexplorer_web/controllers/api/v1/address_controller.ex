@@ -32,7 +32,8 @@ defmodule RexplorerWeb.API.V1.AddressController do
       hash: address.hash,
       is_contract: address.is_contract,
       label: address.label,
-      first_seen_at: address.first_seen_at
+      first_seen_at: address.first_seen_at,
+      balance_wei: if(address.current_balance_wei, do: to_string(address.current_balance_wei), else: nil)
     }
   end
 end

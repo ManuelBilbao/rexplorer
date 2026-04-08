@@ -127,4 +127,15 @@ defmodule Rexplorer.Chain.Adapter do
   - `:token_id` — nil for fungible tokens, token ID for NFTs
   """
   @callback extract_token_transfers(transaction :: map()) :: [map()]
+
+  @doc """
+  Returns whether this chain's RPC node supports `debug_traceBlockByNumber`
+  with the `callTracer` tracer.
+
+  When `true`, the indexer will use traces to discover all addresses whose
+  balance may have changed in a block (including internal calls, CREATEs,
+  and SELFDESTRUCTs). When `false`, only top-level transaction participants
+  are tracked.
+  """
+  @callback supports_traces?() :: boolean()
 end

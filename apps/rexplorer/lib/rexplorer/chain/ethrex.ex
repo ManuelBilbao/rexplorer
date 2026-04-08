@@ -56,6 +56,9 @@ defmodule Rexplorer.Chain.Ethrex do
       end
 
       @impl true
+      def supports_traces?, do: true
+
+      @impl true
       def block_fields do
         [{:batch_number, :integer}]
       end

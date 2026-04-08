@@ -22,8 +22,8 @@ defmodule RexplorerIndexer.Worker do
   import Ecto.Query, only: [from: 2]
 
   alias Rexplorer.{Repo, RPC.Client}
-  alias Rexplorer.Schema.{Block, Batch, Transaction, Operation, Log, TokenTransfer, Address}
-  alias RexplorerIndexer.BlockProcessor
+  alias Rexplorer.Schema.{Block, Batch, Transaction, Operation, Log, TokenTransfer, Address, BalanceChange}
+  alias RexplorerIndexer.{BlockProcessor, BalanceCollector}
 
   defstruct [:chain_id, :adapter, :rpc_url, :last_indexed_block, :last_block_hash, :polling]
 
@@ -122,9 +122,17 @@ defmodule RexplorerIndexer.Worker do
          {:ok, receipts} <- Client.get_block_receipts(state.rpc_url, target_block) do
       result = BlockProcessor.process_block(raw_block, receipts, state.adapter)
 
-      case persist_block(result) do
+      # Collect balance changes for all touched addresses
+      touched = BalanceCollector.collect_touched_addresses(state.adapter, state.rpc_url, raw_block)
+      block_timestamp = parse_block_timestamp(raw_block["timestamp"])
+
+      {balance_changes, address_updates} =
+        BalanceCollector.fetch_balances(state.rpc_url, state.chain_id, target_block, touched, block_timestamp)
+
+      case persist_block(result, balance_changes, address_updates) do
         {:ok, _} ->
           broadcast_new_block(state.chain_id, result)
+          broadcast_balance_changes(state.chain_id, address_updates)
           fetch_batch_info(state, target_block)
 
           new_state = %{state |
@@ -179,7 +187,7 @@ defmodule RexplorerIndexer.Worker do
     end
   end
 
-  defp persist_block(result) do
+  defp persist_block(result, balance_changes, address_updates) do
     Repo.transaction(fn ->
       # Insert block
       block =
@@ -240,6 +248,39 @@ defmodule RexplorerIndexer.Worker do
 
         Repo.insert_all(Address, address_entries, on_conflict: :nothing)
       end
+
+      # Ensure addresses from balance tracking exist in the addresses table
+      # (traces may discover addresses not in top-level tx from/to)
+      if address_updates != [] do
+        now = NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second)
+
+        trace_address_entries =
+          Enum.map(address_updates, fn {address_hash, _balance_wei} ->
+            %{
+              chain_id: result.block.chain_id,
+              hash: address_hash,
+              is_contract: false,
+              first_seen_at: result.block.timestamp,
+              inserted_at: now,
+              updated_at: now
+            }
+          end)
+
+        Repo.insert_all(Address, trace_address_entries, on_conflict: :nothing)
+      end
+
+      # Insert balance changes
+      if balance_changes != [] do
+        Repo.insert_all(BalanceChange, balance_changes, on_conflict: :nothing)
+      end
+
+      # Update current_balance_wei on addresses
+      Enum.each(address_updates, fn {address_hash, balance_wei} ->
+        from(a in Address,
+          where: a.chain_id == ^result.block.chain_id and a.hash == ^address_hash
+        )
+        |> Repo.update_all(set: [current_balance_wei: balance_wei, updated_at: NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second)])
+      end)
 
       :ok
     end)
@@ -392,6 +433,23 @@ defmodule RexplorerIndexer.Worker do
   defp status_rank(:committed), do: 1
   defp status_rank(:verified), do: 2
   defp status_rank(_), do: 0
+
+  defp broadcast_balance_changes(chain_id, address_updates) do
+    Enum.each(address_updates, fn {address_hash, balance_wei} ->
+      Phoenix.PubSub.broadcast(
+        Rexplorer.PubSub,
+        "chain:#{chain_id}:address:#{address_hash}",
+        {:balance_changed, %{balance_wei: to_string(balance_wei)}}
+      )
+    end)
+  rescue
+    _ -> :ok
+  end
+
+  defp parse_block_timestamp(hex_timestamp) do
+    unix = Client.hex_to_integer(hex_timestamp)
+    DateTime.from_unix!(unix) |> DateTime.truncate(:second)
+  end
 
   defp schedule_poll(_state, delay) do
     Process.send_after(self(), :poll, delay)

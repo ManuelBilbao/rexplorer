@@ -46,7 +46,7 @@ The system SHALL store operations in an `operations` table. An operation represe
 - **THEN** one operation of type `multicall_item` is created per inner call, ordered by `operation_index`
 
 ### Requirement: Address tracking
-The system SHALL maintain an `addresses` table. Each address MUST be uniquely identified by `(chain_id, hash)`. Addresses MUST store: hash (the 20-byte address), contract flag (boolean), contract_code_hash (nullable), label (nullable text for ENS or known names), and first_seen_at timestamp.
+The system SHALL maintain an `addresses` table. Each address MUST be uniquely identified by `(chain_id, hash)`. Addresses MUST store: hash (the 20-byte address), contract flag (boolean), contract_code_hash (nullable), label (nullable text for ENS or known names), first_seen_at timestamp, and `current_balance_wei` (nullable numeric — the latest known native-token balance in Wei, updated by the indexer whenever a new balance change is recorded).
 
 #### Scenario: New address discovered during indexing
 - **WHEN** a transaction references an address not yet in the database for that chain
@@ -55,6 +55,14 @@ The system SHALL maintain an `addresses` table. Each address MUST be uniquely id
 #### Scenario: Same address on different chains
 - **WHEN** the same 20-byte address exists on Ethereum and Optimism
 - **THEN** two separate address records exist, one per chain, each with independent metadata
+
+#### Scenario: Balance updated on address record
+- **WHEN** a new `balance_changes` row is inserted for an address
+- **THEN** the `current_balance_wei` field on the `addresses` row is updated to match the new balance
+
+#### Scenario: Address with no balance data
+- **WHEN** an address exists but has never been tracked for balance
+- **THEN** `current_balance_wei` is NULL
 
 ### Requirement: Token transfer tracking
 The system SHALL store token transfers in a `token_transfers` table. Each transfer MUST reference its parent transaction and store: from_address, to_address, token_contract_address, amount (as a decimal/numeric to handle large uint256 values), token_type (enum: `native`, `erc20`, `erc721`, `erc1155`), and token_id (nullable, for NFTs).
