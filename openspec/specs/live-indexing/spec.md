@@ -49,3 +49,14 @@ The indexer worker SHALL call the adapter's `collect_touched_addresses` function
 #### Scenario: Batch verified on L1
 - **WHEN** the updater checks batch 42 and `ethrex_getBatchByNumber` returns a `verify_tx_hash`
 - **THEN** the batch status is updated to `verified` and the hash is stored
+
+### Requirement: Internal transaction persistence during block indexing
+On chains with trace support, the indexer worker SHALL persist internal transactions from the trace data within the same atomic database transaction as blocks, transactions, and balance changes.
+
+#### Scenario: Block with internal transactions
+- **WHEN** block N is indexed on a chain with trace support and the trace contains 5 value-transferring internal calls
+- **THEN** 5 `internal_transactions` rows are inserted in the same DB transaction
+
+#### Scenario: Chain without trace support
+- **WHEN** block N is indexed on a chain without trace support
+- **THEN** no internal transactions are persisted and no trace RPC call is made

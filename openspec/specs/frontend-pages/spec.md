@@ -45,15 +45,23 @@ The system SHALL provide a transaction detail page at `/:chain/tx/:hash` display
 - **THEN** a cross-chain status indicator shows the link type and current status
 
 ### Requirement: Address overview page
-The system SHALL provide an address overview page at `/:chain/address/:hash` displaying address metadata (label, contract flag, first seen), recent transactions, and recent token transfers. Data MUST be fetched from the BFF aggregate endpoint `GET /internal/chains/:chain_slug/addresses/:hash`.
+The address page (`/:chain/address/:hash`) SHALL display a comprehensive address overview including: stat cards (Balance, Last Active, First Seen), a balance history area chart, and tabbed sections for Transactions, Internal Transactions, and Token Transfers with cursor-based pagination. The Internal Transactions tab SHALL only be shown for chains that support traces.
 
-#### Scenario: View address
+#### Scenario: View address with balance
 - **WHEN** the user navigates to `/ethereum/address/0xabc...`
-- **THEN** the address metadata, recent transactions, and token transfers are displayed
+- **THEN** the page displays stat cards, balance chart, and tabbed transaction/transfer sections
 
 #### Scenario: Contract address
 - **WHEN** the address is a contract
 - **THEN** a "Contract" badge is displayed alongside the address
+
+#### Scenario: Internal transactions tab on trace-supported chain
+- **WHEN** the user views an address page on an Ethrex L2 chain
+- **THEN** the page shows three tabs: Transactions, Internal Txns, Token Transfers
+
+#### Scenario: Pagination on transactions tab
+- **WHEN** the user clicks "Load more" on the Transactions tab
+- **THEN** the next page of transactions is fetched and appended
 
 ### Requirement: Landing page / chain selector
 The system SHALL provide a landing page at `/` that displays all enabled chains and allows the user to select one. Selecting a chain MUST navigate to `/:chain/`.
