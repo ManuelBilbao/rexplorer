@@ -56,6 +56,13 @@ export interface Address {
   is_contract: boolean
   label: string | null
   first_seen_at: string
+  balance_wei: string | null
+}
+
+export interface BalanceHistoryEntry {
+  block_number: number
+  balance_wei: string
+  timestamp: string
 }
 
 export interface CrossChainLink {

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { fetchApi } from './client'
-import type { Chain, Block, HomeData, TxDetail, AddressOverview, SearchResult, PaginatedResponse, Transaction } from './types'
+import type { Chain, Block, HomeData, TxDetail, AddressOverview, SearchResult, PaginatedResponse, Transaction, BalanceHistoryEntry, TokenTransfer } from './types'
 
 export function useChains() {
   return useQuery({
@@ -63,6 +63,30 @@ export function useAddressOverview(chain: string | null, hash: string | undefine
   return useQuery({
     queryKey: ['addressOverview', chain, hash],
     queryFn: () => fetchApi<AddressOverview>(`/internal/chains/${chain}/addresses/${hash}`),
+    enabled: !!chain && !!hash,
+  })
+}
+
+export function useBalanceHistory(chain: string | null, hash: string | undefined) {
+  return useQuery({
+    queryKey: ['balanceHistory', chain, hash],
+    queryFn: () => fetchApi<{ data: BalanceHistoryEntry[]; next_cursor: number | null }>(
+      `/internal/chains/${chain}/addresses/${hash}/balance-history`
+    ),
+    enabled: !!chain && !!hash,
+  })
+}
+
+export function useAddressTokenTransfers(chain: string | null, hash: string | undefined, before?: number) {
+  const params = new URLSearchParams({ limit: '25' })
+  if (before) params.set('before', String(before))
+  const qs = params.toString()
+
+  return useQuery({
+    queryKey: ['addressTokenTransfers', chain, hash, before],
+    queryFn: () => fetchApi<PaginatedResponse<TokenTransfer>>(
+      `/api/v1/chains/${chain}/addresses/${hash}/token-transfers?${qs}`
+    ),
     enabled: !!chain && !!hash,
   })
 }
