@@ -7,7 +7,7 @@ defmodule Rexplorer.Addresses do
   """
 
   import Ecto.Query
-  alias Rexplorer.{Repo, Schema.Address, Schema.Transaction, Schema.TokenTransfer}
+  alias Rexplorer.{Repo, Schema.Address, Schema.Transaction, Schema.TokenTransfer, Schema.Frame}
 
   @doc "Returns an address by chain_id and hash."
   def get_address(chain_id, hash) do
@@ -32,10 +32,18 @@ defmodule Rexplorer.Addresses do
         {:error, :not_found}
 
       address ->
+        # Find transactions where the address is from/to OR is a frame target
+        # (EIP-8141 frame txs have to_address=NULL, targets are in frames table)
+        frame_tx_ids =
+          Frame
+          |> where([f], f.chain_id == ^chain_id and f.target == ^hash)
+          |> select([f], f.transaction_id)
+          |> Repo.all()
+
         recent_txs =
           Transaction
           |> where([t], t.chain_id == ^chain_id)
-          |> where([t], t.from_address == ^hash or t.to_address == ^hash)
+          |> where([t], t.from_address == ^hash or t.to_address == ^hash or t.id in ^frame_tx_ids)
           |> order_by([t], desc: t.id)
           |> limit(^limit)
           |> preload(:block)

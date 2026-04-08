@@ -30,10 +30,12 @@ defmodule Rexplorer.Schema.Transaction do
     field :status, :boolean
     field :transaction_index, :integer
     field :chain_extra, :map, default: %{}
+    field :payer, :string
 
     has_many :operations, Rexplorer.Schema.Operation
     has_many :token_transfers, Rexplorer.Schema.TokenTransfer
     has_many :logs, Rexplorer.Schema.Log
+    has_many :frames, Rexplorer.Schema.Frame
 
     timestamps()
   end
@@ -41,7 +43,7 @@ defmodule Rexplorer.Schema.Transaction do
   @doc "Changeset for creating or updating a transaction record."
   def changeset(transaction, attrs) do
     transaction
-    |> cast(attrs, [:chain_id, :hash, :block_id, :from_address, :to_address, :value, :input, :gas_price, :gas_used, :nonce, :transaction_type, :status, :transaction_index, :chain_extra])
+    |> cast(attrs, [:chain_id, :hash, :block_id, :from_address, :to_address, :value, :input, :gas_price, :gas_used, :nonce, :transaction_type, :status, :transaction_index, :chain_extra, :payer])
     |> validate_required([:chain_id, :hash, :block_id, :from_address, :nonce, :transaction_index])
     |> unique_constraint([:chain_id, :hash])
     |> foreign_key_constraint(:chain_id)

@@ -24,6 +24,7 @@ defmodule Rexplorer.Schema.TokenTransfer do
     field :amount, :decimal
     field :token_type, Ecto.Enum, values: [:native, :erc20, :erc721, :erc1155]
     field :token_id, :string
+    field :frame_index, :integer
 
     timestamps()
   end
@@ -31,7 +32,7 @@ defmodule Rexplorer.Schema.TokenTransfer do
   @doc "Changeset for creating or updating a token transfer record."
   def changeset(token_transfer, attrs) do
     token_transfer
-    |> cast(attrs, [:transaction_id, :chain_id, :from_address, :to_address, :token_contract_address, :amount, :token_type, :token_id])
+    |> cast(attrs, [:transaction_id, :chain_id, :from_address, :to_address, :token_contract_address, :amount, :token_type, :token_id, :frame_index])
     |> validate_required([:transaction_id, :chain_id, :from_address, :to_address, :token_contract_address, :amount, :token_type])
     |> foreign_key_constraint(:transaction_id)
     |> foreign_key_constraint(:chain_id)

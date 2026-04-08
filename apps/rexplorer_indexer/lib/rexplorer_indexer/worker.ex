@@ -22,7 +22,7 @@ defmodule RexplorerIndexer.Worker do
   import Ecto.Query, only: [from: 2]
 
   alias Rexplorer.{Repo, RPC.Client}
-  alias Rexplorer.Schema.{Block, Batch, Transaction, Operation, Log, TokenTransfer, Address, BalanceChange, InternalTransaction}
+  alias Rexplorer.Schema.{Block, Batch, Transaction, Operation, Log, TokenTransfer, Address, BalanceChange, InternalTransaction, Frame}
   alias RexplorerIndexer.{BlockProcessor, BalanceCollector, TraceFlattener}
 
   defstruct [:chain_id, :adapter, :rpc_url, :last_indexed_block, :last_block_hash, :polling]
@@ -210,6 +210,15 @@ defmodule RexplorerIndexer.Worker do
           {tx_attrs.hash, tx.id}
         end)
         |> Map.new()
+
+      # Insert frames (EIP-8141 frame transactions)
+      Enum.each(Map.get(result, :frames, []), fn frame_attrs ->
+        tx_id = Map.get(tx_map, frame_attrs[:tx_hash])
+
+        %Frame{}
+        |> Frame.changeset(frame_attrs |> Map.put(:transaction_id, tx_id) |> Map.delete(:tx_hash))
+        |> Repo.insert!()
+      end)
 
       # Insert operations (tx_hash propagated by BlockProcessor)
       Enum.each(result.operations, fn op_attrs ->

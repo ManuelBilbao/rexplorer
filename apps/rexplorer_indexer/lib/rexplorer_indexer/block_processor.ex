@@ -36,28 +36,47 @@ defmodule RexplorerIndexer.BlockProcessor do
 
     receipt_map = index_receipts_by_hash(receipts)
 
-    {transactions, operations, logs, token_transfers} =
+    {transactions, operations, logs, token_transfers, frames} =
       raw_block["transactions"]
       |> Enum.with_index()
-      |> Enum.reduce({[], [], [], []}, fn {raw_tx, _idx}, {txs, ops, lgs, xfers} ->
+      |> Enum.reduce({[], [], [], [], []}, fn {raw_tx, _idx}, {txs, ops, lgs, xfers, frms} ->
         receipt = Map.get(receipt_map, raw_tx["hash"])
-        tx_attrs = extract_transaction(raw_tx, receipt, chain_id, adapter)
 
-        tx_hash = tx_attrs.hash
+        if is_frame_tx?(raw_tx) do
+          # EIP-8141 frame transaction
+          tx_attrs = extract_frame_transaction(raw_tx, receipt, chain_id, adapter)
+          tx_hash = tx_attrs.hash
 
-        tx_operations =
-          extract_operations(tx_attrs, adapter)
-          |> Enum.map(&Map.put(&1, :tx_hash, tx_hash))
+          tx_frames = extract_frames(raw_tx, receipt, chain_id)
+            |> Enum.map(&Map.put(&1, :tx_hash, tx_hash))
 
-        tx_logs =
-          extract_logs(receipt, chain_id)
-          |> Enum.map(&Map.put(&1, :tx_hash, tx_hash))
+          {tx_logs, tx_operations, tx_token_transfers} =
+            extract_per_frame_data(raw_tx, receipt, tx_attrs, adapter, chain_id)
 
-        tx_token_transfers =
-          extract_token_transfers(tx_attrs, tx_logs, adapter, chain_id)
-          |> Enum.map(&Map.put(&1, :tx_hash, tx_hash))
+          tx_logs = Enum.map(tx_logs, &Map.put(&1, :tx_hash, tx_hash))
+          tx_operations = Enum.map(tx_operations, &Map.put(&1, :tx_hash, tx_hash))
+          tx_token_transfers = Enum.map(tx_token_transfers, &Map.put(&1, :tx_hash, tx_hash))
 
-        {[tx_attrs | txs], ops ++ tx_operations, lgs ++ tx_logs, xfers ++ tx_token_transfers}
+          {[tx_attrs | txs], ops ++ tx_operations, lgs ++ tx_logs, xfers ++ tx_token_transfers, frms ++ tx_frames}
+        else
+          # Regular transaction
+          tx_attrs = extract_transaction(raw_tx, receipt, chain_id, adapter)
+          tx_hash = tx_attrs.hash
+
+          tx_operations =
+            extract_operations(tx_attrs, adapter)
+            |> Enum.map(&Map.put(&1, :tx_hash, tx_hash))
+
+          tx_logs =
+            extract_logs(receipt, chain_id)
+            |> Enum.map(&Map.put(&1, :tx_hash, tx_hash))
+
+          tx_token_transfers =
+            extract_token_transfers(tx_attrs, tx_logs, adapter, chain_id)
+            |> Enum.map(&Map.put(&1, :tx_hash, tx_hash))
+
+          {[tx_attrs | txs], ops ++ tx_operations, lgs ++ tx_logs, xfers ++ tx_token_transfers, frms}
+        end
       end)
 
     transactions = Enum.reverse(transactions)
@@ -70,6 +89,7 @@ defmodule RexplorerIndexer.BlockProcessor do
       operations: operations,
       logs: logs,
       token_transfers: token_transfers,
+      frames: frames,
       addresses: addresses
     }
   end
@@ -270,6 +290,164 @@ defmodule RexplorerIndexer.BlockProcessor do
       acc
       |> MapSet.put(xfer.from_address)
       |> MapSet.put(xfer.to_address)
+    end)
+  end
+
+  # ── EIP-8141 Frame Transaction Support ──
+  #
+  # Frame transactions (type 0x06) contain sequential execution frames instead
+  # of a single {to, value, input}. Each frame has its own mode, target, gas,
+  # status, and logs.
+  #
+  # ```mermaid
+  # sequenceDiagram
+  #     participant BP as BlockProcessor
+  #     BP->>BP: is_frame_tx?(raw_tx) — check type == "0x6"
+  #     BP->>BP: extract_frame_transaction — from_address=sender, to=nil, payer from receipt
+  #     BP->>BP: extract_frames — parse tx.frames + receipt.frameReceipts
+  #     loop Each frame
+  #         alt SENDER frame
+  #             BP->>BP: extract_operations(sender, target, data, logs)
+  #             BP->>BP: extract_token_transfers(logs)
+  #         end
+  #         alt DEFAULT frame
+  #             BP->>BP: extract_operations(entry_point, target, data, logs)
+  #         end
+  #         BP->>BP: extract_logs with frame_index
+  #     end
+  # ```
+
+  @doc "Returns true if the raw transaction is an EIP-8141 frame transaction (type 0x06)."
+  def is_frame_tx?(%{"type" => "0x6"}), do: true
+  def is_frame_tx?(%{"type" => type}) when is_binary(type) do
+    Client.hex_to_integer(type) == 6
+  rescue
+    _ -> false
+  end
+  def is_frame_tx?(_), do: false
+
+  @doc "Extracts transaction attributes from a frame transaction."
+  def extract_frame_transaction(raw_tx, receipt, chain_id, adapter) do
+    chain_extra =
+      extract_chain_extra(raw_tx, adapter.transaction_fields())
+      |> enrich_tx_chain_extra(raw_tx)
+
+    %{
+      chain_id: chain_id,
+      hash: raw_tx["hash"],
+      from_address: downcase(raw_tx["sender"] || raw_tx["from"]),
+      to_address: nil,
+      value: Decimal.new(0),
+      input: nil,
+      gas_price: Client.hex_to_integer(raw_tx["maxFeePerGas"]),
+      nonce: Client.hex_to_integer(raw_tx["nonce"]),
+      transaction_type: 6,
+      transaction_index: Client.hex_to_integer(raw_tx["transactionIndex"]),
+      chain_extra: chain_extra,
+      payer: downcase(receipt && receipt["payer"]),
+      status: parse_status(receipt),
+      gas_used: Client.hex_to_integer(receipt && receipt["gasUsed"])
+    }
+  end
+
+  @doc "Extracts frame attribute maps from a frame transaction and its receipt."
+  def extract_frames(raw_tx, receipt, chain_id) do
+    raw_frames = raw_tx["frames"] || []
+    frame_receipts = (receipt && receipt["frameReceipts"]) || []
+
+    raw_frames
+    |> Enum.with_index()
+    |> Enum.map(fn {frame, idx} ->
+      frame_receipt = Enum.at(frame_receipts, idx) || %{}
+
+      %{
+        chain_id: chain_id,
+        frame_index: idx,
+        mode: Client.hex_to_integer(frame["mode"]),
+        target: downcase(frame["to"]),
+        gas_limit: Client.hex_to_integer(frame["gasLimit"]),
+        gas_used: Client.hex_to_integer(frame_receipt["gasUsed"]),
+        status: parse_status(frame_receipt),
+        data: Client.hex_to_binary(frame["data"])
+      }
+    end)
+  end
+
+  @doc "Extracts logs, operations, and token transfers per-frame from a frame transaction."
+  def extract_per_frame_data(raw_tx, receipt, tx_attrs, adapter, chain_id) do
+    raw_frames = raw_tx["frames"] || []
+    frame_receipts = (receipt && receipt["frameReceipts"]) || []
+    sender = tx_attrs.from_address
+    entry_point = "0x00000000000000000000000000000000000000aa"
+
+    raw_frames
+    |> Enum.with_index()
+    |> Enum.reduce({[], [], []}, fn {frame, idx}, {logs_acc, ops_acc, xfers_acc} ->
+      frame_receipt = Enum.at(frame_receipts, idx) || %{}
+      mode = Client.hex_to_integer(frame["mode"])
+      target = downcase(frame["to"])
+      frame_data = Client.hex_to_binary(frame["data"])
+
+      # Extract logs for this frame, assigning synthetic log_index
+      # (frame receipt logs may not include logIndex)
+      global_log_offset = length(logs_acc)
+      frame_logs =
+        extract_logs(frame_receipt, chain_id)
+        |> Enum.with_index(global_log_offset)
+        |> Enum.map(fn {log, synthetic_idx} ->
+          log
+          |> Map.put(:frame_index, idx)
+          |> Map.put(:log_index, log.log_index || synthetic_idx)
+        end)
+
+      # Extract operations for SENDER and DEFAULT frames (skip VERIFY)
+      frame_ops =
+        if mode in [0, 2] do
+          from_addr = if mode == 2, do: sender, else: entry_point
+
+          op_tx = %{
+            from_address: from_addr,
+            to_address: target,
+            value: Decimal.new(0),
+            input: frame_data,
+            chain_id: chain_id
+          }
+
+          adapter.extract_operations(op_tx)
+          |> Enum.map(fn op ->
+            op
+            |> Map.merge(%{chain_id: chain_id, frame_index: idx})
+          end)
+        else
+          []
+        end
+
+      # Extract token transfers from frame logs
+      frame_xfers =
+        if frame_logs != [] do
+          tx_with_logs = %{
+            from_address: sender,
+            to_address: target,
+            value: Decimal.new(0),
+            logs: Enum.map(frame_logs, fn log ->
+              %{
+                contract_address: log.contract_address,
+                topic0: log.topic0,
+                topic1: log.topic1,
+                topic2: log.topic2,
+                topic3: log.topic3,
+                data: encode_data_as_hex(log.data)
+              }
+            end)
+          }
+
+          adapter.extract_token_transfers(tx_with_logs)
+          |> Enum.map(&Map.merge(&1, %{chain_id: chain_id, frame_index: idx}))
+        else
+          []
+        end
+
+      {logs_acc ++ frame_logs, ops_acc ++ frame_ops, xfers_acc ++ frame_xfers}
     end)
   end
 end

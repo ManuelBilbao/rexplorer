@@ -41,6 +41,7 @@ export function TxDetailPage() {
   if (!data) return <div className="text-rex-text-secondary py-12 text-center">Transaction not found</div>
 
   const tx = data.transaction
+  const isFrameTx = tx.transaction_type === 6 && data.frames && data.frames.length > 0
   const mainSummary = data.operations.find(op => op.decoded_summary)?.decoded_summary
   const opType = data.operations[0]?.operation_type
 
@@ -125,15 +126,87 @@ export function TxDetailPage() {
           <DetailRow label="Hash" value={hash || ''} mono copyable />
           <DetailRow label="Block" value={tx.block_number?.toLocaleString() ?? '-'} link={tx.block_number ? `/${chain}/block/${tx.block_number}` : undefined} />
           <DetailRow label="From" value={tx.from_address} mono copyable link={`/${chain}/address/${tx.from_address}`} />
-          <DetailRow label="To" value={tx.to_address ?? 'Contract Creation'} mono copyable link={tx.to_address ? `/${chain}/address/${tx.to_address}` : undefined} />
-          <DetailRow label="Value" value={formatAmount(tx.value, 18, nativeSymbol(chain))} />
+          {isFrameTx ? (
+            <DetailRow label="Sender" value={tx.from_address} mono copyable link={`/${chain}/address/${tx.from_address}`} />
+          ) : (
+            <DetailRow label="To" value={tx.to_address ?? 'Contract Creation'} mono copyable link={tx.to_address ? `/${chain}/address/${tx.to_address}` : undefined} />
+          )}
+          {isFrameTx && tx.payer && tx.payer !== tx.from_address && (
+            <DetailRow label="Payer" value={tx.payer} mono copyable link={`/${chain}/address/${tx.payer}`} />
+          )}
+          {!isFrameTx && <DetailRow label="Value" value={formatAmount(tx.value, 18, nativeSymbol(chain))} />}
           <DetailRow label="Gas Used" value={tx.gas_used ? formatGas(tx.gas_used) : '-'} />
           {tx.gas_price && <DetailRow label="Gas Price" value={`${(tx.gas_price / 1e9).toFixed(2)} gwei`} />}
           {opType && <DetailRow label="Operation Type" value={opType} />}
           <DetailRow label="Nonce" value={String(tx.nonce)} />
-          {tx.transaction_type != null && <DetailRow label="Tx Type" value={String(tx.transaction_type)} />}
+          {tx.transaction_type != null && <DetailRow label="Tx Type" value={isFrameTx ? 'Frame (0x06)' : String(tx.transaction_type)} />}
         </div>
       </div>
+
+      {/* Frames (EIP-8141) */}
+      {isFrameTx && data.frames.length > 0 && (
+        <div className="bg-rex-bg-secondary border border-rex-border rounded-xl overflow-hidden">
+          <div className="px-5 py-3 border-b border-rex-border">
+            <h2 className="text-sm font-semibold text-rex-text-secondary uppercase tracking-wide">
+              Frames ({data.frames.length})
+            </h2>
+          </div>
+          <div className="divide-y divide-rex-border">
+            {data.frames.map(frame => {
+              const frameOps = data.operations.filter(op => op.frame_index === frame.frame_index)
+              const frameLogs = data.logs.filter(l => l.frame_index === frame.frame_index)
+              const frameTransfers = data.token_transfers.filter(t => t.frame_index === frame.frame_index)
+
+              return (
+                <div key={frame.frame_index} className="p-4">
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className="text-xs font-mono text-rex-text-secondary">#{frame.frame_index}</span>
+                    <span className={`px-2 py-0.5 text-xs rounded font-medium ${
+                      (frame.mode & 0xFF) === 1 ? 'bg-blue-500/10 text-blue-500' :
+                      (frame.mode & 0xFF) === 2 ? 'bg-rex-primary/10 text-rex-primary' :
+                      'bg-rex-bg-tertiary text-rex-text-secondary'
+                    }`}>
+                      {modeLabel(frame.mode)}
+                    </span>
+                    {frame.target && (
+                      <Link to={`/${chain}/address/${frame.target}`} className="text-xs font-mono text-rex-primary hover:underline">
+                        {frame.target.slice(0, 10)}...{frame.target.slice(-4)}
+                      </Link>
+                    )}
+                    <span className={`ml-auto px-2 py-0.5 text-xs rounded ${
+                      frame.status === true ? 'bg-rex-success/10 text-rex-success' :
+                      frame.status === false ? 'bg-rex-danger/10 text-rex-danger' :
+                      'bg-rex-bg-tertiary text-rex-text-secondary'
+                    }`}>
+                      {frame.status === true ? '✓' : frame.status === false ? '✗' : '...'}
+                    </span>
+                    {frame.gas_used != null && (
+                      <span className="text-xs text-rex-text-secondary">{formatGas(frame.gas_used)} gas</span>
+                    )}
+                  </div>
+                  {/* Decoded operations for this frame */}
+                  {frameOps.map(op => op.decoded_summary && (
+                    <p key={op.operation_index} className="text-sm text-rex-text ml-6 mb-1">
+                      {linkifyAddresses(op.decoded_summary, chain)}
+                    </p>
+                  ))}
+                  {(frame.mode & 0xFF) === 1 && frameOps.length === 0 && (
+                    <p className="text-sm text-rex-text-secondary ml-6">
+                      {verifyDescription(frame.target, tx.from_address, tx.payer)}
+                    </p>
+                  )}
+                  {/* Token transfers for this frame */}
+                  {frameTransfers.map((t, i) => (
+                    <div key={i} className="text-xs font-mono text-rex-text-secondary ml-6">
+                      Transfer: {t.amount} {t.token_type} {t.from_address.slice(0, 8)}... → {t.to_address.slice(0, 8)}...
+                    </div>
+                  ))}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Advanced: Operations detail */}
       {advanced && data.operations.length > 0 && (
@@ -272,6 +345,26 @@ function nativeSymbol(chain: string | null): string {
 
 function chainBorderColor(chain: string | null): string {
   return CHAIN_COLORS[chain || '']?.border || 'border-l-rex-primary'
+}
+
+function modeLabel(mode: number): string {
+  switch (mode & 0xFF) {
+    case 0: return 'DEFAULT'
+    case 1: return 'VERIFY'
+    case 2: return 'SENDER'
+    default: return `MODE(${mode})`
+  }
+}
+
+function verifyDescription(target: string | null, sender: string, payer: string | null): string {
+  const t = target?.toLowerCase()
+  const s = sender?.toLowerCase()
+  const p = payer?.toLowerCase()
+
+  if (t && t === s && t === p) return 'Approved execution & payment'
+  if (t && t === s) return 'Approved execution'
+  if (t && t === p) return 'Approved payment'
+  return 'Signature verification'
 }
 
 function ChainBadge({ chain }: { chain: string | null }) {

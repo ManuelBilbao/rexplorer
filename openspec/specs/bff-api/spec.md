@@ -11,6 +11,10 @@ The system SHALL expose `GET /internal/chains/:chain_slug/transactions/:hash` re
 - **WHEN** a transaction is part of a bridge deposit
 - **THEN** the `cross_chain_links` array includes the link with source/destination chain info and current status
 
+#### Scenario: Frame transaction detail
+- **WHEN** `GET /internal/chains/ethrex/transactions/0xabc...` is called for a frame transaction
+- **THEN** the response contains `transaction` (with `payer`), `frames` array (with per-frame data), `operations` (with `frame_index`), `logs` (with `frame_index`), and `token_transfers` (with `frame_index`)
+
 ### Requirement: Address overview aggregate
 The system SHALL expose `GET /internal/chains/:chain_slug/addresses/:hash` returning the address metadata (including current native-token balance as `balance_wei`), recent transactions (with operation summaries), and recent token transfers (with token metadata) in a single response.
 
@@ -21,6 +25,10 @@ The system SHALL expose `GET /internal/chains/:chain_slug/addresses/:hash` retur
 #### Scenario: Address overview with no balance data
 - **WHEN** `GET /internal/chains/ethereum/addresses/0xabc...` is called for an address with no balance data
 - **THEN** the `address.balance_wei` field is `null`
+
+#### Scenario: Address overview includes frame-targeted transactions
+- **WHEN** `GET /internal/chains/ethrex/addresses/0xUniswap` is called
+- **THEN** the `recent_transactions` array includes frame transactions where 0xUniswap is a frame target
 
 ### Requirement: Balance history endpoint
 The system SHALL expose `GET /internal/chains/:chain_slug/addresses/:hash/balance-history` returning a time-ordered list of balance data points suitable for rendering a chart. The endpoint MUST support cursor-based pagination via `before` (block_number) and `limit` query parameters.

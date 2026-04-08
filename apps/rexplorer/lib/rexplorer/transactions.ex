@@ -41,7 +41,8 @@ defmodule Rexplorer.Transactions do
             :block,
             [operations: from(o in Rexplorer.Schema.Operation, order_by: o.operation_index)],
             :token_transfers,
-            [logs: from(l in Rexplorer.Schema.Log, order_by: l.log_index)]
+            [logs: from(l in Rexplorer.Schema.Log, order_by: l.log_index)],
+            [frames: from(f in Rexplorer.Schema.Frame, order_by: f.frame_index)]
           ])
 
         # Load cross-chain links

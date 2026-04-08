@@ -40,6 +40,14 @@ The system SHALL provide a transaction detail page at `/:chain/tx/:hash` display
 - **WHEN** the user clicks the "Advanced" toggle
 - **THEN** raw calldata, event logs with topics, and full operation details are shown
 
+#### Scenario: Frame transaction detail page
+- **WHEN** the user views a frame transaction
+- **THEN** the page shows a "Frames" section with each frame as an expandable row showing mode, target, gas, status, and decoded operations
+
+#### Scenario: Sponsored frame transaction
+- **WHEN** the user views a frame transaction where `payer != sender`
+- **THEN** the page shows both "Sender" and "Payer" in the transaction header
+
 #### Scenario: Cross-chain link displayed
 - **WHEN** the transaction is part of a bridge deposit
 - **THEN** a cross-chain status indicator shows the link type and current status
@@ -62,6 +70,10 @@ The address page (`/:chain/address/:hash`) SHALL display a comprehensive address
 #### Scenario: Pagination on transactions tab
 - **WHEN** the user clicks "Load more" on the Transactions tab
 - **THEN** the next page of transactions is fetched and appended
+
+#### Scenario: Frame-targeted transactions visible
+- **WHEN** a user views an address page for an address that is only targeted by frame txs
+- **THEN** those frame transactions appear in the Transactions tab
 
 ### Requirement: Landing page / chain selector
 The system SHALL provide a landing page at `/` that displays all enabled chains and allows the user to select one. Selecting a chain MUST navigate to `/:chain/`.

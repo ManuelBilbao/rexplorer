@@ -5,12 +5,16 @@ defmodule RexplorerWeb.Internal.TransactionDetailController do
   def show(conn, %{"hash" => hash, "chain_slug" => slug}) do
     with {:ok, chain} <- Rexplorer.Chains.get_chain_by_slug(slug),
          {:ok, tx, cross_chain_links} <- Rexplorer.Transactions.get_full_transaction(chain.chain_id, hash) do
+      frames =
+        if Ecto.assoc_loaded?(tx.frames), do: tx.frames, else: []
+
       json(conn, %{
         transaction: tx_json(tx),
         operations: Enum.map(tx.operations, &op_json/1),
         token_transfers: Enum.map(tx.token_transfers, &transfer_json/1),
         logs: Enum.map(tx.logs, &log_json/1),
-        cross_chain_links: Enum.map(cross_chain_links, &link_json/1)
+        cross_chain_links: Enum.map(cross_chain_links, &link_json/1),
+        frames: Enum.map(frames, &frame_json/1)
       })
     end
   end
@@ -25,6 +29,8 @@ defmodule RexplorerWeb.Internal.TransactionDetailController do
       gas_used: tx.gas_used,
       nonce: tx.nonce,
       status: tx.status,
+      transaction_type: tx.transaction_type,
+      payer: tx.payer,
       block_number: tx.block.block_number,
       block_timestamp: tx.block.timestamp
     }
@@ -37,7 +43,8 @@ defmodule RexplorerWeb.Internal.TransactionDetailController do
       from_address: op.from_address,
       to_address: op.to_address,
       value: to_string(op.value),
-      decoded_summary: op.decoded_summary
+      decoded_summary: op.decoded_summary,
+      frame_index: op.frame_index
     }
   end
 
@@ -48,7 +55,8 @@ defmodule RexplorerWeb.Internal.TransactionDetailController do
       token_contract_address: t.token_contract_address,
       amount: to_string(t.amount),
       token_type: t.token_type,
-      token_id: t.token_id
+      token_id: t.token_id,
+      frame_index: t.frame_index
     }
   end
 
@@ -60,7 +68,19 @@ defmodule RexplorerWeb.Internal.TransactionDetailController do
       topic1: l.topic1,
       topic2: l.topic2,
       topic3: l.topic3,
-      decoded: l.decoded
+      decoded: l.decoded,
+      frame_index: l.frame_index
+    }
+  end
+
+  defp frame_json(f) do
+    %{
+      frame_index: f.frame_index,
+      mode: f.mode,
+      target: f.target,
+      gas_limit: f.gas_limit,
+      gas_used: f.gas_used,
+      status: f.status
     }
   end
 

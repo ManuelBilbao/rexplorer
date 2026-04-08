@@ -16,15 +16,19 @@ The system SHALL store blocks from multiple chains in a single `blocks` table. E
 - **THEN** the system SHALL enforce uniqueness and reject the duplicate
 
 ### Requirement: Transaction storage with chain awareness
-The system SHALL store transactions in a `transactions` table. Each transaction MUST be uniquely identified by `(chain_id, hash)`. Transactions MUST store: block reference, from_address, to_address, value, input (calldata), gas_price, gas_used, nonce, transaction_type, status, transaction_index, and a `chain_extra` JSONB column for chain-specific fields.
+The system SHALL store transactions in a `transactions` table. Each transaction MUST be uniquely identified by `(chain_id, hash)`. Transactions MUST store: block reference, from_address, to_address (nullable — NULL for contract creation and frame transactions), value, input (calldata, nullable for frame transactions), gas_price, gas_used, nonce, transaction_type, status, transaction_index, a `chain_extra` JSONB column for chain-specific fields, and `payer` (nullable VARCHAR — the address that paid gas fees, set from receipt for frame transactions).
 
 #### Scenario: Store standard EOA transfer
 - **WHEN** a simple ETH transfer transaction is ingested
-- **THEN** the system stores it with `from_address`, `to_address`, `value`, and `transaction_type` set to the appropriate EIP-2718 type
+- **THEN** the system stores it with `from_address`, `to_address`, `value`, `transaction_type`, and `payer = NULL`
 
 #### Scenario: Store L2 transaction with deposit metadata
 - **WHEN** a deposit transaction from L1→L2 is ingested on an L2 chain
 - **THEN** the `chain_extra` JSONB column SHALL contain the L1 origin transaction hash and deposit nonce
+
+#### Scenario: Store frame transaction
+- **WHEN** a type `0x06` frame transaction is ingested
+- **THEN** the system stores it with `from_address = sender`, `to_address = NULL`, `value = 0`, `input = NULL`, `transaction_type = 6`, and `payer` set from the receipt
 
 ### Requirement: Operation abstraction
 The system SHALL store operations in an `operations` table. An operation represents a single user intent extracted from a transaction. A transaction MAY contain one or more operations. Each operation MUST reference its parent transaction and store: operation_type (enum: `call`, `user_operation`, `multisig_execution`, `multicall_item`, `delegate_call`), operation_index within the transaction, from_address (the logical sender), to_address, value, input data, and decoded_summary (nullable text for the human-readable narration).
@@ -44,6 +48,14 @@ The system SHALL store operations in an `operations` table. An operation represe
 #### Scenario: Multicall produces multiple operations
 - **WHEN** a `multicall()` transaction is processed
 - **THEN** one operation of type `multicall_item` is created per inner call, ordered by `operation_index`
+
+#### Scenario: Operation from SENDER frame
+- **WHEN** a SENDER frame is decoded into an operation
+- **THEN** the operation is stored with `frame_index` set to the frame's index
+
+#### Scenario: Operation from regular transaction
+- **WHEN** a regular transaction produces an operation
+- **THEN** the operation is stored with `frame_index = NULL`
 
 ### Requirement: Address tracking
 The system SHALL maintain an `addresses` table. Each address MUST be uniquely identified by `(chain_id, hash)`. Addresses MUST store: hash (the 20-byte address), contract flag (boolean), contract_code_hash (nullable), label (nullable text for ENS or known names), first_seen_at timestamp, and `current_balance_wei` (nullable numeric — the latest known native-token balance in Wei, updated by the indexer whenever a new balance change is recorded).
@@ -75,12 +87,28 @@ The system SHALL store token transfers in a `token_transfers` table. Each transf
 - **WHEN** a transaction transfers ETH via `value` field
 - **THEN** the system stores a token transfer with `token_type` = `native`
 
+#### Scenario: Token transfer from frame
+- **WHEN** a SENDER frame emits a Transfer event
+- **THEN** the token transfer is stored with `frame_index` set
+
+#### Scenario: Token transfer from regular transaction
+- **WHEN** a regular transaction includes a token transfer
+- **THEN** the token transfer is stored with `frame_index = NULL`
+
 ### Requirement: Event log storage
-The system SHALL store event logs in a `logs` table. Each log MUST reference its parent transaction and store: log_index, contract_address, topic0 through topic3, data (raw bytes), and a `decoded` JSONB column (nullable, for future decoder pipeline output).
+The system SHALL store event logs in a `logs` table. Each log MUST reference its parent transaction and store: log_index, contract_address, topic0 through topic3, data (raw bytes), a `decoded` JSONB column (nullable), and `frame_index` (nullable integer — set for logs from frame transactions to associate them with a specific frame).
 
 #### Scenario: Store raw event log
 - **WHEN** a transaction emits events
 - **THEN** all events are stored with their raw topics and data, indexed by `(chain_id, transaction_hash, log_index)`
+
+#### Scenario: Store log from frame transaction
+- **WHEN** a frame transaction's frame 2 emits an event
+- **THEN** the log is stored with `frame_index = 2`
+
+#### Scenario: Store log from regular transaction
+- **WHEN** a regular transaction emits an event
+- **THEN** the log is stored with `frame_index = NULL`
 
 ### Requirement: Cross-chain link tracking
 The system SHALL store cross-chain links in a `cross_chain_links` table. A link connects two transactions on different chains that are part of the same user journey (e.g., L1 deposit → L2 relay). Each link MUST store: source_chain_id, source_tx_hash, destination_chain_id, destination_tx_hash (nullable — destination may not yet be indexed), link_type (enum: `deposit`, `withdrawal`, `relay`), message_hash (the canonical bridge message identifier), and status (enum: `initiated`, `relayed`, `proven`, `finalized`).

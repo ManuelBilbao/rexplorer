@@ -36,6 +36,7 @@ defmodule Rexplorer.Schema.Operation do
     field :input, :binary
     field :decoded_summary, :string
     field :decoder_version, :integer
+    field :frame_index, :integer
 
     timestamps()
   end
@@ -43,7 +44,7 @@ defmodule Rexplorer.Schema.Operation do
   @doc "Changeset for creating or updating an operation record."
   def changeset(operation, attrs) do
     operation
-    |> cast(attrs, [:transaction_id, :chain_id, :operation_type, :operation_index, :from_address, :to_address, :value, :input, :decoded_summary, :decoder_version])
+    |> cast(attrs, [:transaction_id, :chain_id, :operation_type, :operation_index, :from_address, :to_address, :value, :input, :decoded_summary, :decoder_version, :frame_index])
     |> validate_required([:transaction_id, :chain_id, :operation_type, :operation_index, :from_address])
     |> foreign_key_constraint(:transaction_id)
     |> foreign_key_constraint(:chain_id)

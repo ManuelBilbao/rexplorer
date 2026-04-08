@@ -94,6 +94,16 @@ export interface Log {
   topic2: string | null
   topic3: string | null
   decoded: Record<string, unknown> | null
+  frame_index: number | null
+}
+
+export interface Frame {
+  frame_index: number
+  mode: number
+  target: string | null
+  gas_limit: number | null
+  gas_used: number | null
+  status: boolean | null
 }
 
 export interface HomeData {
@@ -103,11 +113,12 @@ export interface HomeData {
 }
 
 export interface TxDetail {
-  transaction: Transaction & { block_timestamp: string }
-  operations: Operation[]
-  token_transfers: TokenTransfer[]
+  transaction: Transaction & { block_timestamp: string; payer: string | null }
+  operations: (Operation & { frame_index: number | null })[]
+  token_transfers: (TokenTransfer & { frame_index: number | null })[]
   logs: Log[]
   cross_chain_links: CrossChainLink[]
+  frames: Frame[]
 }
 
 export interface AddressOverview {

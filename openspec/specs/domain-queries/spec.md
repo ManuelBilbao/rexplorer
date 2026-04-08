@@ -16,7 +16,11 @@ The system SHALL provide `Rexplorer.Transactions` with functions: `get_transacti
 
 #### Scenario: Get full transaction with associations
 - **WHEN** `Rexplorer.Transactions.get_full_transaction(1, "0xabc...")` is called
-- **THEN** it returns the transaction with operations, token_transfers, logs, and cross_chain_links preloaded
+- **THEN** it returns the transaction with operations, token_transfers, logs, cross_chain_links, and frames preloaded
+
+#### Scenario: Get full frame transaction with frames
+- **WHEN** `Rexplorer.Transactions.get_full_transaction(1, "0xabc...")` is called for a frame transaction
+- **THEN** it returns the transaction with frames preloaded in order
 
 #### Scenario: List transactions for address
 - **WHEN** `Rexplorer.Transactions.list_transactions(1, address: "0xabc...", limit: 25)` is called
@@ -32,6 +36,10 @@ The system SHALL provide `Rexplorer.Addresses` with functions: `get_address(chai
 #### Scenario: Address overview for address with no balance
 - **WHEN** `Rexplorer.Addresses.get_address_overview(1, "0xabc...")` is called for an address with no balance data
 - **THEN** the address struct has `current_balance_wei = nil`
+
+#### Scenario: Address overview includes frame-targeted transactions
+- **WHEN** `Rexplorer.Addresses.get_address_overview(1, "0xUniswap")` is called and a frame tx has a SENDER frame targeting 0xUniswap
+- **THEN** that frame transaction appears in the recent transactions list
 
 ### Requirement: Balance query module
 The system SHALL provide `Rexplorer.Balances` with functions for querying balance data. This module is separate from `Rexplorer.Addresses` because balance history queries are distinct from address metadata queries.
