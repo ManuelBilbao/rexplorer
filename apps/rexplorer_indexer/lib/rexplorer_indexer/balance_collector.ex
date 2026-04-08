@@ -126,18 +126,51 @@ defmodule RexplorerIndexer.BalanceCollector do
           {list(map()), list({String.t(), Decimal.t()})}
   def fetch_balances(rpc_url, chain_id, block_number, touched_addresses, block_timestamp) do
     now = NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second)
+    addresses = MapSet.to_list(touched_addresses)
 
-    touched_addresses
-    |> Enum.reduce({[], []}, fn address_hash, {changes_acc, updates_acc} ->
-      case Client.get_balance(rpc_url, address_hash, block_number) do
+    # Batch fetch all balances at block_number
+    balance_results = Client.get_balances(rpc_url, addresses, block_number)
+
+    # Find first-seen addresses (no prior balance_changes rows)
+    first_seen = Enum.filter(addresses, fn addr -> get_last_known_balance(chain_id, addr) == nil end)
+
+    # Batch fetch seed balances at block_number - 1 for first-seen addresses
+    seed_results =
+      if first_seen != [] and block_number > 0 do
+        Client.get_balances(rpc_url, first_seen, block_number - 1)
+      else
+        %{}
+      end
+
+    # Process each address
+    Enum.reduce(addresses, {[], []}, fn address_hash, {changes_acc, updates_acc} ->
+      case Map.get(balance_results, address_hash) do
         {:ok, balance_int} ->
           balance_wei = Decimal.new(balance_int)
           last_known = get_last_known_balance(chain_id, address_hash)
+          is_first_seen = last_known == nil
 
-          {seed_entries, is_first_seen} =
-            case last_known do
-              nil -> build_seed(rpc_url, chain_id, address_hash, block_number, block_timestamp, now)
-              _ -> {[], false}
+          seed_entries =
+            if is_first_seen do
+              case Map.get(seed_results, address_hash) do
+                {:ok, seed_int} ->
+                  [%{
+                    chain_id: chain_id,
+                    address_hash: address_hash,
+                    block_number: block_number - 1,
+                    balance_wei: Decimal.new(seed_int),
+                    timestamp: block_timestamp,
+                    source: "seed",
+                    inserted_at: now,
+                    updated_at: now
+                  }]
+
+                _ ->
+                  Logger.warning("[BalanceCollector] Seed fetch failed for #{address_hash} at block #{block_number - 1}")
+                  []
+              end
+            else
+              []
             end
 
           if balance_changed?(balance_wei, last_known, is_first_seen) do
@@ -154,7 +187,6 @@ defmodule RexplorerIndexer.BalanceCollector do
 
             {seed_entries ++ [entry] ++ changes_acc, [{address_hash, balance_wei} | updates_acc]}
           else
-            # Balance didn't change, but if first seen, still insert seed
             if seed_entries != [] do
               seed_balance = hd(seed_entries).balance_wei
               {seed_entries ++ changes_acc, [{address_hash, seed_balance} | updates_acc]}
@@ -163,11 +195,7 @@ defmodule RexplorerIndexer.BalanceCollector do
             end
           end
 
-        {:error, reason} ->
-          Logger.warning(
-            "[BalanceCollector] eth_getBalance failed for #{address_hash} at block #{block_number}: #{inspect(reason)}"
-          )
-
+        _ ->
           {changes_acc, updates_acc}
       end
     end)
@@ -183,36 +211,6 @@ defmodule RexplorerIndexer.BalanceCollector do
         select: bc.balance_wei
 
     Repo.one(query)
-  end
-
-  # Builds a seed row for a first-seen address by fetching balance at block N-1.
-  defp build_seed(rpc_url, chain_id, address_hash, block_number, block_timestamp, now) do
-    if block_number > 0 do
-      case Client.get_balance(rpc_url, address_hash, block_number - 1) do
-        {:ok, seed_balance_int} ->
-          seed_entry = %{
-            chain_id: chain_id,
-            address_hash: address_hash,
-            block_number: block_number - 1,
-            balance_wei: Decimal.new(seed_balance_int),
-            timestamp: block_timestamp,
-            source: "seed",
-            inserted_at: now,
-            updated_at: now
-          }
-
-          {[seed_entry], true}
-
-        {:error, reason} ->
-          Logger.warning(
-            "[BalanceCollector] Seed fetch failed for #{address_hash} at block #{block_number - 1}: #{inspect(reason)}"
-          )
-
-          {[], true}
-      end
-    else
-      {[], true}
-    end
   end
 
   # Checks whether the balance has changed from the last known value.

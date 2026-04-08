@@ -82,6 +82,52 @@ defmodule Rexplorer.RPC.Client do
     call(url, "eth_getBlockReceipts", [integer_to_hex(block_number)])
   end
 
+  @doc """
+  Makes a batch JSON-RPC call (sends an array of requests, receives an array of responses).
+
+  Takes a list of `{method, params}` tuples. Returns `{:ok, results}` where results
+  is a list of `{:ok, result}` or `{:error, reason}` in the same order as the input.
+
+  ## Example
+
+      {:ok, results} = Client.batch_call(url, [
+        {"eth_getBalance", ["0xabc...", "0x1F4"]},
+        {"eth_getBalance", ["0xdef...", "0x1F4"]}
+      ])
+  """
+  def batch_call(url, calls, opts \\ []) when is_list(calls) do
+    if calls == [], do: {:ok, []}
+
+    body =
+      calls
+      |> Enum.with_index(1)
+      |> Enum.map(fn {{method, params}, id} ->
+        %{"jsonrpc" => "2.0", "id" => id, "method" => method, "params" => params}
+      end)
+
+    timeout = opts[:timeout] || 60_000
+
+    case Req.post(url, json: body, receive_timeout: timeout) do
+      {:ok, %Req.Response{status: 200, body: responses}} when is_list(responses) ->
+        # Sort by id to match input order
+        sorted = Enum.sort_by(responses, & &1["id"])
+
+        results =
+          Enum.map(sorted, fn
+            %{"result" => result} -> {:ok, result}
+            %{"error" => error} -> {:error, %{code: error["code"], message: error["message"]}}
+          end)
+
+        {:ok, results}
+
+      {:ok, %Req.Response{status: status}} ->
+        {:error, %{http_status: status}}
+
+      {:error, exception} ->
+        {:error, exception}
+    end
+  end
+
   # Balance and trace methods
 
   @doc """
@@ -99,6 +145,49 @@ defmodule Rexplorer.RPC.Client do
       {:ok, hex} -> {:ok, hex_to_integer(hex)}
       error -> error
     end
+  end
+
+  @doc """
+  Fetches balances for multiple addresses at a given block in a single batch RPC call.
+
+  Returns a map of `%{address => {:ok, balance_int} | {:error, reason}}`.
+  Addresses are lowercased in the returned map. Requests are chunked into
+  batches of `chunk_size` (default 500) to avoid overwhelming the node.
+
+  ## Example
+
+      results = Client.get_balances(url, ["0xabc...", "0xdef..."], 100)
+      # %{"0xabc..." => {:ok, 1000000000000000000}, "0xdef..." => {:ok, 0}}
+  """
+  def get_balances(url, addresses, block_number, chunk_size \\ 500) do
+    block_hex = integer_to_hex(block_number)
+
+    addresses
+    |> Enum.chunk_every(chunk_size)
+    |> Enum.reduce(%{}, fn chunk, acc ->
+      calls = Enum.map(chunk, fn addr -> {"eth_getBalance", [addr, block_hex]} end)
+
+      case batch_call(url, calls) do
+        {:ok, results} ->
+          chunk
+          |> Enum.zip(results)
+          |> Enum.reduce(acc, fn {addr, result}, inner_acc ->
+            parsed =
+              case result do
+                {:ok, hex} -> {:ok, hex_to_integer(hex)}
+                error -> error
+              end
+
+            Map.put(inner_acc, String.downcase(addr), parsed)
+          end)
+
+        {:error, reason} ->
+          # If the whole batch fails, mark all addresses as failed
+          Enum.reduce(chunk, acc, fn addr, inner_acc ->
+            Map.put(inner_acc, String.downcase(addr), {:error, reason})
+          end)
+      end
+    end)
   end
 
   @doc """
