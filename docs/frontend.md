@@ -58,6 +58,71 @@ sequenceDiagram
     Page->>Page: prepend to block list
 ```
 
+## Component Architecture
+
+```mermaid
+graph TD
+    subgraph "Pages"
+        HP[HomePage]
+        BLP[BlockListPage]
+        BDP[BlockDetailPage]
+        TDP[TxDetailPage]
+        AP[AddressPage]
+    end
+
+    subgraph "Explorer Components"
+        SB[StatusBadge]
+        CB[ChainBadge]
+        AD[AddressDisplay]
+        BN[BlockNumber]
+        TH[TxHash]
+        TA[TimeAgo]
+        TA2[TokenAmount]
+        ES[EffectsSection]
+        BC[BalanceChart]
+    end
+
+    subgraph "UI Components"
+        Badge
+        Button
+        DataTable
+        Skeleton
+        Tabs
+        Modal
+        Dropdown
+        Tooltip
+        Toast
+    end
+
+    HP --> BN & TA & Skeleton
+    BLP --> DataTable & BN & TA
+    BDP --> DataTable & Skeleton & AD & TH
+    TDP --> SB & CB & BN & AD & TA & Badge & Button & Skeleton
+    AP --> SB & AD & TH & TA & Badge & Button & Skeleton & Tabs & BC
+
+    SB --> Badge
+    CB --> Badge
+    DataTable --> Skeleton & Button
+```
+
+### Component usage guidelines
+
+| When rendering... | Use this component |
+|---|---|
+| Transaction status (success/fail/pending) | `StatusBadge` |
+| Chain name with color dot | `ChainBadge` |
+| Blockchain address (with link + copy) | `AddressDisplay` |
+| Block number (with link) | `BlockNumber` |
+| Transaction hash (with link + copy) | `TxHash` |
+| Relative timestamps | `TimeAgo` (not `timeAgo()` utility) |
+| Token amounts with decimals | `TokenAmount` |
+| Tabular data with pagination | `DataTable` (with `onLoadMore`/`hasMore`) |
+| Loading placeholders | `Skeleton` (not raw `animate-pulse` divs) |
+| Label/tag badges | `Badge` |
+| Clickable actions | `Button` |
+
+Explorer components (`StatusBadge`, `ChainBadge`) delegate to UI components (`Badge`) internally. Pages should never re-implement badge or status rendering inline.
+
 ## Key Decisions
 
 - **Custom component library** — no third-party UI framework. All components in `src/components/ui/` built with Tailwind CSS.

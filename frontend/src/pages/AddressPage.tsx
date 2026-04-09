@@ -21,7 +21,13 @@ import { useChain } from '../hooks/useChain'
 import { useAddressOverview, useBalanceHistory, useTransactions, useAddressTokenTransfers, useAddressInternalTransactions } from '../api/queries'
 import { BalanceChart } from '../components/explorer/BalanceChart'
 import { Tabs, TabList, Tab, TabPanel } from '../components/ui/Tabs'
-import { timeAgo } from '../lib/format'
+import Skeleton from '../components/ui/Skeleton'
+import Badge from '../components/ui/Badge'
+import Button from '../components/ui/Button'
+import { StatusBadge } from '../components/explorer/StatusBadge'
+import { AddressDisplay } from '../components/explorer/AddressDisplay'
+import { TxHash } from '../components/explorer/TxHash'
+import { TimeAgo } from '../components/explorer/TimeAgo'
 
 export function AddressPage() {
   const chain = useChain()
@@ -32,16 +38,13 @@ export function AddressPage() {
   if (isLoading) {
     return (
       <div className="space-y-4">
-        {/* Stat card skeletons */}
         <div className="grid grid-cols-3 gap-4">
           {[1, 2, 3].map(i => (
-            <div key={i} className="h-20 bg-rex-bg-tertiary rounded-lg animate-pulse" />
+            <Skeleton key={i} width="100%" height="5rem" />
           ))}
         </div>
-        {/* Chart skeleton */}
-        <div className="h-64 bg-rex-bg-tertiary rounded-lg animate-pulse" />
-        {/* List skeleton */}
-        <div className="h-48 bg-rex-bg-tertiary rounded-lg animate-pulse" />
+        <Skeleton width="100%" height="16rem" />
+        <Skeleton width="100%" height="12rem" />
       </div>
     )
   }
@@ -51,7 +54,7 @@ export function AddressPage() {
   const { address } = data
   const lastTx = data.recent_transactions[0]
   const lastActive = lastTx?.block_number
-    ? timeAgo(lastTx.chain_extra?.timestamp as string || address.first_seen_at)
+    ? lastTx.chain_extra?.timestamp as string || address.first_seen_at
     : null
 
   return (
@@ -60,8 +63,8 @@ export function AddressPage() {
       <h1 className="text-2xl font-bold mb-1 text-rex-text">
         Address
         {address.is_contract && (
-          <span className="ml-2 text-sm px-2 py-0.5 rounded bg-rex-primary/10 text-rex-primary font-normal">
-            Contract
+          <span className="ml-2 align-middle">
+            <Badge variant="blue">Contract</Badge>
           </span>
         )}
       </h1>
@@ -73,14 +76,14 @@ export function AddressPage() {
       {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <StatCard label="Balance" value={formatBalance(address.balance_wei, chain)} />
-        <StatCard label="Last Active" value={lastActive || timeAgo(address.first_seen_at)} />
-        <StatCard label="First Seen" value={timeAgo(address.first_seen_at)} />
+        <StatCard label="Last Active" value={lastActive ? <TimeAgo timestamp={lastActive} /> : <TimeAgo timestamp={address.first_seen_at} />} />
+        <StatCard label="First Seen" value={<TimeAgo timestamp={address.first_seen_at} />} />
       </div>
 
       {/* Balance Chart */}
       <div className="mb-6">
         {historyLoading ? (
-          <div className="h-64 bg-rex-bg-tertiary rounded-lg animate-pulse" />
+          <Skeleton width="100%" height="16rem" />
         ) : (
           <BalanceChart data={historyData?.data || []} />
         )}
@@ -120,7 +123,7 @@ export function AddressPage() {
 
 /* ── Stat Card ── */
 
-function StatCard({ label, value }: { label: string; value: string }) {
+function StatCard({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="border border-rex-border rounded-lg p-4">
       <div className="text-xs text-rex-text-secondary mb-1">{label}</div>
@@ -158,12 +161,11 @@ function TransactionsList({ chain, hash, initialTxs }: TxListProps) {
 
   // Append paginated results when they arrive
   if (moreTxs?.data && moreTxs.data.length > 0 && cursor) {
-    const newHashes = new Set(moreTxs.data.map(t => t.hash))
     const existingHashes = new Set(allTxs.map(t => t.hash))
     const genuinelyNew = moreTxs.data.filter(t => !existingHashes.has(t.hash))
     if (genuinelyNew.length > 0) {
       setAllTxs(prev => [...prev, ...genuinelyNew])
-      setCursor(undefined) // reset so we don't re-fetch
+      setCursor(undefined)
     }
   }
 
@@ -176,36 +178,29 @@ function TransactionsList({ chain, hash, initialTxs }: TxListProps) {
       <div className="space-y-2 text-sm">
         {allTxs.map(tx => (
           <div key={tx.hash} className="flex items-center justify-between gap-2">
-            <Link to={`/${chain}/tx/${tx.hash}`} className="text-rex-primary hover:underline font-mono shrink-0">
-              {tx.hash.slice(0, 10)}...{tx.hash.slice(-6)}
-            </Link>
+            <TxHash hash={tx.hash} chain={chain!} />
             <div className="text-rex-text-secondary text-xs font-mono truncate">
-              <Link to={`/${chain}/address/${tx.from_address}`} className="hover:text-rex-primary">{tx.from_address.slice(0, 8)}...</Link>
-              {' \u2192 '}
+              <AddressDisplay address={tx.from_address} chain={chain!} />
+              {' → '}
               {tx.to_address ? (
-                <Link to={`/${chain}/address/${tx.to_address}`} className="hover:text-rex-primary">{tx.to_address.slice(0, 8)}...</Link>
+                <AddressDisplay address={tx.to_address} chain={chain!} />
               ) : 'Create'}
             </div>
-            <span className={`px-2 py-0.5 text-xs rounded shrink-0 ${
-              tx.status === true ? 'bg-rex-success/10 text-rex-success' :
-              tx.status === false ? 'bg-rex-danger/10 text-rex-danger' :
-              'bg-rex-bg-tertiary text-rex-text-secondary'
-            }`}>
-              {tx.status === true ? 'OK' : tx.status === false ? 'Fail' : '...'}
-            </span>
+            <StatusBadge status={tx.status} />
           </div>
         ))}
       </div>
 
       {initialTxs.length >= 25 && (
         <div className="mt-4 text-center">
-          <button
+          <Button
+            variant="outline"
+            size="sm"
             onClick={loadMore}
-            disabled={isFetching}
-            className="px-4 py-2 text-sm border border-rex-border rounded-lg text-rex-text hover:bg-rex-bg-secondary transition-colors disabled:opacity-50"
+            loading={isFetching}
           >
-            {isFetching ? 'Loading...' : 'Load more'}
-          </button>
+            Load more
+          </Button>
         </div>
       )}
     </div>
@@ -232,10 +227,8 @@ function TokenTransfersList({ chain, hash, initialTransfers }: TransferListProps
   const { data: moreTransfers, isFetching } = useAddressTokenTransfers(chain, hash, cursor)
 
   const loadMore = () => {
-    // Token transfers use ID-based cursor; we need the next_cursor from the API
-    // For initial load, trigger the first paginated fetch
     if (!cursor) {
-      setCursor(-1) // triggers the query with no cursor (gets first page from API)
+      setCursor(-1)
     }
   }
 
@@ -258,15 +251,11 @@ function TokenTransfersList({ chain, hash, initialTransfers }: TransferListProps
     <div>
       <div className="space-y-2 text-sm">
         {allTransfers.map((t, i) => (
-          <div key={i} className="flex items-center gap-2 font-mono text-xs">
-            <Link to={`/${chain}/address/${t.from_address}`} className="hover:text-rex-primary text-rex-text-secondary">
-              {t.from_address.slice(0, 10)}...
-            </Link>
-            <span className="text-rex-text-secondary">{'\u2192'}</span>
-            <Link to={`/${chain}/address/${t.to_address}`} className="hover:text-rex-primary text-rex-text-secondary">
-              {t.to_address.slice(0, 10)}...
-            </Link>
-            <span className="ml-auto text-rex-text">
+          <div key={i} className="flex items-center gap-2 text-xs">
+            <AddressDisplay address={t.from_address} chain={chain!} />
+            <span className="text-rex-text-secondary">→</span>
+            <AddressDisplay address={t.to_address} chain={chain!} />
+            <span className="ml-auto font-mono text-rex-text">
               {formatTransferAmount(t)} {t.token_type === 'native' ? nativeSymbol(chain) : t.token_type.toUpperCase()}
             </span>
           </div>
@@ -275,13 +264,14 @@ function TokenTransfersList({ chain, hash, initialTransfers }: TransferListProps
 
       {initialTransfers.length >= 25 && (
         <div className="mt-4 text-center">
-          <button
+          <Button
+            variant="outline"
+            size="sm"
             onClick={loadMore}
-            disabled={isFetching}
-            className="px-4 py-2 text-sm border border-rex-border rounded-lg text-rex-text hover:bg-rex-bg-secondary transition-colors disabled:opacity-50"
+            loading={isFetching}
           >
-            {isFetching ? 'Loading...' : 'Load more'}
-          </button>
+            Load more
+          </Button>
         </div>
       )}
     </div>
@@ -321,37 +311,34 @@ function InternalTransactionsList({ chain, hash }: { chain: string | null; hash:
   return (
     <div>
       <div className="space-y-2 text-sm">
-        {displayEntries.map((entry, i) => (
+        {displayEntries.map((entry) => (
           <div key={`${entry.transaction_hash}-${entry.trace_index}`} className="flex items-center justify-between gap-2">
-            <Link to={`/${chain}/tx/${entry.transaction_hash}`} className="text-rex-primary hover:underline font-mono shrink-0">
-              {entry.transaction_hash.slice(0, 10)}...{entry.transaction_hash.slice(-6)}
-            </Link>
-            <div className="text-rex-text-secondary text-xs font-mono truncate">
-              <Link to={`/${chain}/address/${entry.from_address}`} className="hover:text-rex-primary">{entry.from_address.slice(0, 8)}...</Link>
-              {' \u2192 '}
+            <TxHash hash={entry.transaction_hash} chain={chain!} />
+            <div className="text-rex-text-secondary text-xs truncate">
+              <AddressDisplay address={entry.from_address} chain={chain!} />
+              {' → '}
               {entry.to_address ? (
-                <Link to={`/${chain}/address/${entry.to_address}`} className="hover:text-rex-primary">{entry.to_address.slice(0, 8)}...</Link>
+                <AddressDisplay address={entry.to_address} chain={chain!} />
               ) : 'Create'}
             </div>
             <span className="text-rex-text text-xs font-mono shrink-0">
               {formatInternalValue(entry.value, chain)}
             </span>
-            <span className="px-2 py-0.5 text-xs rounded bg-rex-bg-tertiary text-rex-text-secondary shrink-0">
-              {entry.call_type}
-            </span>
+            <Badge variant="gray">{entry.call_type}</Badge>
           </div>
         ))}
       </div>
 
       {data?.next_cursor && (
         <div className="mt-4 text-center">
-          <button
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => setCursor(data.next_cursor as number)}
-            disabled={isFetching}
-            className="px-4 py-2 text-sm border border-rex-border rounded-lg text-rex-text hover:bg-rex-bg-secondary transition-colors disabled:opacity-50"
+            loading={isFetching}
           >
-            {isFetching ? 'Loading...' : 'Load more'}
-          </button>
+            Load more
+          </Button>
         </div>
       )}
     </div>

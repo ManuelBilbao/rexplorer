@@ -2,9 +2,17 @@ import { useState } from 'react'
 import { useParams, Link } from 'react-router'
 import { useChain } from '../hooks/useChain'
 import { useTxDetail } from '../api/queries'
-import { formatAmount, formatGas, timeAgo } from '../lib/format'
+import { formatAmount, formatGas } from '../lib/format'
 import { EffectsSection } from '../components/explorer/EffectsSection'
 import { linkifyAddresses } from '../lib/linkify'
+import Skeleton from '../components/ui/Skeleton'
+import Badge from '../components/ui/Badge'
+import Button from '../components/ui/Button'
+import { StatusBadge } from '../components/explorer/StatusBadge'
+import { ChainBadge } from '../components/explorer/ChainBadge'
+import { BlockNumber } from '../components/explorer/BlockNumber'
+import { AddressDisplay } from '../components/explorer/AddressDisplay'
+import { TimeAgo } from '../components/explorer/TimeAgo'
 
 function actionIcon(summary: string | null): string {
   if (!summary) return '📝'
@@ -31,9 +39,9 @@ export function TxDetailPage() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="h-32 bg-rex-bg-secondary border border-rex-border rounded-xl animate-pulse" />
-        <div className="h-24 bg-rex-bg-secondary border border-rex-border rounded-xl animate-pulse" />
-        <div className="h-48 bg-rex-bg-secondary border border-rex-border rounded-xl animate-pulse" />
+        <Skeleton width="100%" height="8rem" />
+        <Skeleton width="100%" height="6rem" />
+        <Skeleton width="100%" height="12rem" />
       </div>
     )
   }
@@ -51,18 +59,20 @@ export function TxDetailPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold text-rex-text">Transaction</h1>
         <div className="flex items-center gap-2">
-          <button
+          <Button
+            variant={!advanced ? 'primary' : 'ghost'}
+            size="sm"
             onClick={() => setAdvanced(false)}
-            className={`px-3 py-1 text-xs rounded-lg transition-colors ${!advanced ? 'bg-rex-primary text-white' : 'bg-rex-bg-tertiary text-rex-text-secondary hover:text-rex-text'}`}
           >
             Simple
-          </button>
-          <button
+          </Button>
+          <Button
+            variant={advanced ? 'primary' : 'ghost'}
+            size="sm"
             onClick={() => setAdvanced(true)}
-            className={`px-3 py-1 text-xs rounded-lg transition-colors ${advanced ? 'bg-rex-primary text-white' : 'bg-rex-bg-tertiary text-rex-text-secondary hover:text-rex-text'}`}
           >
             Advanced
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -76,37 +86,25 @@ export function TxDetailPage() {
                 {linkifyAddresses(mainSummary, chain)}
               </p>
               <div className="flex items-center gap-3 mt-3 text-xs text-rex-text-secondary">
-                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded font-medium ${
-                  tx.status === true ? 'bg-rex-success/10 text-rex-success' :
-                  tx.status === false ? 'bg-rex-danger/10 text-rex-danger' :
-                  'bg-rex-bg-tertiary text-rex-text-secondary'
-                }`}>
-                  {tx.status === true ? '✓ Success' : tx.status === false ? '✗ Failed' : '⏳ Pending'}
-                </span>
+                <StatusBadge status={tx.status} />
                 <ChainBadge chain={chain} />
-                {tx.block_number && <Link to={`/${chain}/block/${tx.block_number}`} className="hover:text-rex-primary">Block {tx.block_number.toLocaleString()}</Link>}
-                {tx.block_timestamp && <span>{timeAgo(tx.block_timestamp)}</span>}
+                {tx.block_number && <BlockNumber number={tx.block_number} chain={chain!} />}
+                {tx.block_timestamp && <TimeAgo timestamp={tx.block_timestamp} />}
               </div>
             </div>
           </div>
         ) : (
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${
-                tx.status === true ? 'bg-rex-success/10 text-rex-success' :
-                tx.status === false ? 'bg-rex-danger/10 text-rex-danger' :
-                'bg-rex-bg-tertiary text-rex-text-secondary'
-              }`}>
-                {tx.status === true ? '✓ Success' : tx.status === false ? '✗ Failed' : '⏳ Pending'}
-              </span>
+              <StatusBadge status={tx.status} />
               <ChainBadge chain={chain} />
               {opType && opType !== 'call' && (
-                <span className="px-2 py-0.5 text-xs rounded bg-rex-bg-tertiary text-rex-text-secondary">{opType}</span>
+                <Badge variant="gray">{opType}</Badge>
               )}
             </div>
             <p className="text-sm text-rex-text-secondary">
-              Block {tx.block_number?.toLocaleString()}
-              {tx.block_timestamp && <> · {timeAgo(tx.block_timestamp)}</>}
+              {tx.block_number && <>Block <BlockNumber number={tx.block_number} chain={chain!} /></>}
+              {tx.block_timestamp && <> · <TimeAgo timestamp={tx.block_timestamp} /></>}
             </p>
           </div>
         )}
@@ -154,31 +152,24 @@ export function TxDetailPage() {
           <div className="divide-y divide-rex-border">
             {data.frames.map(frame => {
               const frameOps = data.operations.filter(op => op.frame_index === frame.frame_index)
-              const frameLogs = data.logs.filter(l => l.frame_index === frame.frame_index)
               const frameTransfers = data.token_transfers.filter(t => t.frame_index === frame.frame_index)
 
               return (
                 <div key={frame.frame_index} className="p-4">
                   <div className="flex items-center gap-3 mb-2">
                     <span className="text-xs font-mono text-rex-text-secondary">#{frame.frame_index}</span>
-                    <span className={`px-2 py-0.5 text-xs rounded font-medium ${
-                      (frame.mode & 0xFF) === 1 ? 'bg-blue-500/10 text-blue-500' :
-                      (frame.mode & 0xFF) === 2 ? 'bg-rex-primary/10 text-rex-primary' :
-                      'bg-rex-bg-tertiary text-rex-text-secondary'
-                    }`}>
+                    <Badge variant={
+                      (frame.mode & 0xFF) === 1 ? 'blue' :
+                      (frame.mode & 0xFF) === 2 ? 'yellow' :
+                      'gray'
+                    }>
                       {modeLabel(frame.mode)}
-                    </span>
+                    </Badge>
                     {frame.target && (
-                      <Link to={`/${chain}/address/${frame.target}`} className="text-xs font-mono text-rex-primary hover:underline">
-                        {frame.target.slice(0, 10)}...{frame.target.slice(-4)}
-                      </Link>
+                      <AddressDisplay address={frame.target} chain={chain!} />
                     )}
-                    <span className={`ml-auto px-2 py-0.5 text-xs rounded ${
-                      frame.status === true ? 'bg-rex-success/10 text-rex-success' :
-                      frame.status === false ? 'bg-rex-danger/10 text-rex-danger' :
-                      'bg-rex-bg-tertiary text-rex-text-secondary'
-                    }`}>
-                      {frame.status === true ? '✓' : frame.status === false ? '✗' : '...'}
+                    <span className="ml-auto">
+                      <StatusBadge status={frame.status} />
                     </span>
                     {frame.gas_used != null && (
                       <span className="text-xs text-rex-text-secondary">{formatGas(frame.gas_used)} gas</span>
@@ -220,7 +211,7 @@ export function TxDetailPage() {
             {data.operations.map(op => (
               <div key={op.operation_index} className="p-4 text-sm">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="px-2 py-0.5 text-xs rounded bg-rex-bg-tertiary font-mono">{op.operation_type}</span>
+                  <Badge variant="gray">{op.operation_type}</Badge>
                   <span className="text-rex-text-secondary text-xs">#{op.operation_index}</span>
                 </div>
                 {op.decoded_summary && <p className="text-rex-text mb-2">{linkifyAddresses(op.decoded_summary, chain)}</p>}
@@ -247,10 +238,8 @@ export function TxDetailPage() {
             {data.logs.map(log => (
               <div key={log.log_index} className="p-4">
                 <div className="flex items-center gap-2 mb-2 text-xs">
-                  <span className="px-2 py-0.5 rounded bg-rex-bg-tertiary font-mono">#{log.log_index}</span>
-                  <Link to={`/${chain}/address/${log.contract_address}`} className="font-mono text-rex-primary hover:underline">
-                    {log.contract_address.slice(0, 10)}...{log.contract_address.slice(-4)}
-                  </Link>
+                  <Badge variant="gray">#{log.log_index}</Badge>
+                  <AddressDisplay address={log.contract_address} chain={chain!} />
                 </div>
                 {log.decoded && (
                   <p className="text-sm text-rex-text mb-2">
@@ -278,8 +267,8 @@ export function TxDetailPage() {
           <div className="p-4">
             {data.cross_chain_links.map((link, i) => (
               <div key={i} className="flex items-center gap-3 text-sm">
-                <span className="px-2 py-0.5 text-xs rounded bg-rex-bg-tertiary">{link.link_type}</span>
-                <span className="px-2 py-0.5 text-xs rounded bg-rex-bg-tertiary">{link.status}</span>
+                <Badge variant="gray">{link.link_type}</Badge>
+                <Badge variant="gray">{link.status}</Badge>
                 <span className="text-xs font-mono text-rex-text-secondary">
                   Chain {link.source_chain_id} → Chain {link.destination_chain_id}
                 </span>
@@ -327,12 +316,12 @@ function DetailRow({ label, value, mono, copyable, link }: { label: string; valu
   )
 }
 
-const CHAIN_COLORS: Record<string, { border: string; dot: string; name: string }> = {
-  ethereum: { border: 'border-l-blue-500', dot: 'bg-blue-500', name: 'Ethereum' },
-  optimism: { border: 'border-l-red-500', dot: 'bg-red-500', name: 'Optimism' },
-  base: { border: 'border-l-blue-600', dot: 'bg-blue-600', name: 'Base' },
-  bnb: { border: 'border-l-yellow-500', dot: 'bg-yellow-500', name: 'BNB Chain' },
-  polygon: { border: 'border-l-purple-500', dot: 'bg-purple-500', name: 'Polygon' },
+const CHAIN_BORDER_COLORS: Record<string, string> = {
+  ethereum: 'border-l-blue-500',
+  optimism: 'border-l-red-500',
+  base: 'border-l-blue-600',
+  bnb: 'border-l-yellow-500',
+  polygon: 'border-l-purple-500',
 }
 
 const NATIVE_SYMBOLS: Record<string, string> = {
@@ -344,7 +333,7 @@ function nativeSymbol(chain: string | null): string {
 }
 
 function chainBorderColor(chain: string | null): string {
-  return CHAIN_COLORS[chain || '']?.border || 'border-l-rex-primary'
+  return CHAIN_BORDER_COLORS[chain || ''] || 'border-l-rex-primary'
 }
 
 function modeLabel(mode: number): string {
@@ -365,16 +354,4 @@ function verifyDescription(target: string | null, sender: string, payer: string 
   if (t && t === s) return 'Approved execution'
   if (t && t === p) return 'Approved payment'
   return 'Signature verification'
-}
-
-function ChainBadge({ chain }: { chain: string | null }) {
-  const info = CHAIN_COLORS[chain || '']
-  if (!info) return null
-
-  return (
-    <span className="inline-flex items-center gap-1.5">
-      <span className={`w-2 h-2 rounded-full ${info.dot}`} />
-      <span>{info.name}</span>
-    </span>
-  )
 }

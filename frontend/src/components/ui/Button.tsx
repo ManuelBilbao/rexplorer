@@ -1,6 +1,6 @@
 import React from "react";
 
-type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
+type ButtonVariant = "primary" | "secondary" | "outline" | "ghost" | "danger";
 type ButtonSize = "sm" | "md" | "lg";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -17,6 +17,8 @@ const variantClasses: Record<ButtonVariant, string> = {
     "bg-rex-primary text-white hover:opacity-90",
   secondary:
     "bg-rex-bg-tertiary text-rex-text hover:opacity-80",
+  outline:
+    "border border-rex-border text-rex-text hover:bg-rex-bg-secondary bg-transparent",
   ghost:
     "bg-transparent text-rex-text-secondary hover:bg-rex-bg-tertiary",
   danger:

@@ -1,7 +1,10 @@
 import { Link } from 'react-router'
 import { useChain } from '../hooks/useChain'
 import { useHomeData } from '../api/queries'
-import { formatBlockNumber, timeAgo } from '../lib/format'
+import { formatBlockNumber } from '../lib/format'
+import Skeleton from '../components/ui/Skeleton'
+import { BlockNumber } from '../components/explorer/BlockNumber'
+import { TimeAgo } from '../components/explorer/TimeAgo'
 
 export function HomePage() {
   const chain = useChain()
@@ -20,17 +23,17 @@ export function HomePage() {
         <StatCard
           label="Block Height"
           value={latestBlock ? formatBlockNumber(latestBlock.block_number) : '-'}
-          sub={latestBlock ? timeAgo(latestBlock.timestamp) : ''}
+          sub={latestBlock ? <TimeAgo timestamp={latestBlock.timestamp} /> : null}
         />
         <StatCard
           label="Transactions"
           value={latestBlock ? `${latestBlock.transaction_count} in last block` : '-'}
-          sub=""
+          sub={null}
         />
         <StatCard
           label="Gas Used"
           value={latestBlock ? `${Math.round((latestBlock.gas_used / latestBlock.gas_limit) * 100)}%` : '-'}
-          sub={latestBlock ? `${(latestBlock.gas_used / 1e6).toFixed(1)}M / ${(latestBlock.gas_limit / 1e6).toFixed(1)}M` : ''}
+          sub={latestBlock ? `${(latestBlock.gas_used / 1e6).toFixed(1)}M / ${(latestBlock.gas_limit / 1e6).toFixed(1)}M` : null}
         />
         <StatCard
           label="Chain"
@@ -51,20 +54,15 @@ export function HomePage() {
               <div key={block.block_number} className="flex items-center justify-between py-2.5 border-b border-rex-border last:border-0">
                 <div className="flex items-center gap-3">
                   <div className="w-2 h-2 rounded-full bg-rex-success" />
-                  <Link
-                    to={`/${chain}/block/${block.block_number}`}
-                    className="text-rex-primary font-mono text-sm font-medium hover:underline"
-                  >
-                    {formatBlockNumber(block.block_number)}
-                  </Link>
+                  <BlockNumber number={block.block_number} chain={chain!} />
                 </div>
                 <div className="flex items-center gap-4 text-xs">
                   <span className="text-rex-text-secondary">
                     {block.transaction_count} txs
                   </span>
                   <GasBar percent={Math.round((block.gas_used / (block.gas_limit || 1)) * 100)} />
-                  <span className="text-rex-text-secondary w-12 text-right">
-                    {timeAgo(block.timestamp)}
+                  <span className="w-12 text-right">
+                    <TimeAgo timestamp={block.timestamp} />
                   </span>
                 </div>
               </div>
@@ -111,7 +109,7 @@ export function HomePage() {
   )
 }
 
-function StatCard({ label, value, sub }: { label: string; value: string; sub: string }) {
+function StatCard({ label, value, sub }: { label: string; value: string; sub: React.ReactNode }) {
   return (
     <div className="bg-rex-bg-secondary border border-rex-border rounded-xl p-4">
       <div className="text-xs text-rex-text-secondary uppercase tracking-wide mb-2">
@@ -154,18 +152,22 @@ function LoadingSkeleton() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {[1, 2, 3, 4].map(i => (
           <div key={i} className="bg-rex-bg-secondary border border-rex-border rounded-xl p-4">
-            <div className="h-3 w-16 bg-rex-bg-tertiary rounded animate-pulse mb-3" />
-            <div className="h-6 w-24 bg-rex-bg-tertiary rounded animate-pulse" />
+            <Skeleton width="4rem" height="0.75rem" />
+            <div className="mt-3">
+              <Skeleton width="6rem" height="1.5rem" />
+            </div>
           </div>
         ))}
       </div>
       <div className="grid md:grid-cols-2 gap-6">
         {[1, 2].map(i => (
           <div key={i} className="bg-rex-bg-secondary border border-rex-border rounded-xl p-5">
-            <div className="h-4 w-32 bg-rex-bg-tertiary rounded animate-pulse mb-4" />
-            {[1, 2, 3, 4, 5].map(j => (
-              <div key={j} className="h-5 bg-rex-bg-tertiary rounded animate-pulse mb-3" />
-            ))}
+            <Skeleton width="8rem" height="1rem" />
+            <div className="mt-4 space-y-3">
+              {[1, 2, 3, 4, 5].map(j => (
+                <Skeleton key={j} width="100%" height="1.25rem" />
+              ))}
+            </div>
           </div>
         ))}
       </div>

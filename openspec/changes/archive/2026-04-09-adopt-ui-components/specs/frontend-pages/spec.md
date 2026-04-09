@@ -1,15 +1,4 @@
-## ADDED Requirements
-
-### Requirement: Home page
-The home page MUST use `Skeleton` for loading states, `BlockNumber` for block links, and `TimeAgo` for timestamps. The status dot indicator pattern (colored dots for tx status in compact lists) MAY remain as-is since it serves a different visual purpose than StatusBadge.
-
-#### Scenario: Loading state
-- **WHEN** the home page is loading
-- **THEN** Skeleton components are displayed (not hand-rolled animate-pulse divs)
-
-#### Scenario: Block numbers are linked
-- **WHEN** a block number is displayed in the latest blocks list
-- **THEN** it uses the BlockNumber component
+## MODIFIED Requirements
 
 ### Requirement: Block list page
 The system SHALL provide a block list page at `/:chain/blocks` displaying a paginated table of blocks using the `DataTable` component with columns: block number (via `BlockNumber` component), timestamp (via `TimeAgo` component), transaction count, gas used. Pagination MUST use the `DataTable`'s `onLoadMore`/`hasMore` props. Loading state MUST use `DataTable`'s built-in skeleton loading.
@@ -63,21 +52,19 @@ The address page (`/:chain/address/:hash`) SHALL use shared components throughou
 - **WHEN** any tab is loading data
 - **THEN** Skeleton components are displayed (not hand-rolled animate-pulse divs)
 
-### Requirement: Landing page / chain selector
-The system SHALL provide a landing page at `/` that displays all enabled chains and allows the user to select one. Selecting a chain MUST navigate to `/:chain/`.
+### Requirement: Home page
+The home page MUST use `Skeleton` for loading states, `BlockNumber` for block links, and `TimeAgo` for timestamps. The status dot indicator pattern (colored dots for tx status in compact lists) MAY remain as-is since it serves a different visual purpose than StatusBadge.
 
-#### Scenario: Select chain
-- **WHEN** the user visits `/` and clicks "Ethereum"
-- **THEN** the app navigates to `/ethereum/`
+#### Scenario: Loading state
+- **WHEN** the home page is loading
+- **THEN** Skeleton components are displayed (not hand-rolled animate-pulse divs)
 
-### Requirement: 404 page
-The system SHALL display a "not found" page when navigating to an unknown route or when a resource (block, transaction, address) doesn't exist.
-
-#### Scenario: Unknown route
-- **WHEN** the user navigates to `/ethereum/unknown-page`
-- **THEN** a "Page not found" message is displayed
+#### Scenario: Block numbers are linked
+- **WHEN** a block number is displayed in the latest blocks list
+- **THEN** it uses the BlockNumber component
 
 ## REMOVED Requirements
 
-<!-- Removed by change: adopt-ui-components -->
-<!-- Requirement: Design preview page — The DesignPreview page (`/design` route) was a scaffolding artifact used for palette exploration during initial development. Its purpose is complete — the color system is established via Tailwind design tokens. The page uses zero shared components, zero Tailwind classes, and 100% inline styles with hardcoded mock data. Migration: No migration needed. Palette history is preserved in git. Remove `DesignPreview.tsx` and its route from `App.tsx`. -->
+### Requirement: Design preview page
+**Reason**: The DesignPreview page (`/design` route) was a scaffolding artifact used for palette exploration during initial development. Its purpose is complete — the color system is established via Tailwind design tokens. The page uses zero shared components, zero Tailwind classes, and 100% inline styles with hardcoded mock data.
+**Migration**: No migration needed. Palette history is preserved in git. Remove `DesignPreview.tsx` and its route from `App.tsx`.

@@ -2,6 +2,10 @@ import { Link, useParams } from 'react-router'
 import { useChain } from '../hooks/useChain'
 import { useBlock, useTransactions } from '../api/queries'
 import { formatBlockNumber, formatGas, formatTimestamp } from '../lib/format'
+import Skeleton from '../components/ui/Skeleton'
+import DataTable from '../components/ui/DataTable'
+import { AddressDisplay } from '../components/explorer/AddressDisplay'
+import { TxHash } from '../components/explorer/TxHash'
 
 export function BlockDetailPage() {
   const chain = useChain()
@@ -10,14 +14,48 @@ export function BlockDetailPage() {
   const { data: txData } = useTransactions(chain, { blockNumber: number ? Number(number) : undefined })
 
   if (isLoading) {
-    return <div className="space-y-4">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="h-6 bg-rex-bg-tertiary rounded animate-pulse" />
-      ))}
-    </div>
+    return (
+      <div className="space-y-4">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Skeleton key={i} width="100%" height="1.5rem" />
+        ))}
+      </div>
+    )
   }
 
   if (!block) return <div className="text-rex-text-secondary">Block not found</div>
+
+  const txColumns = [
+    {
+      header: 'Hash',
+      accessor: (tx: { hash: string }) => (
+        <TxHash hash={tx.hash} chain={chain!} />
+      ),
+    },
+    {
+      header: 'From',
+      accessor: (tx: { from_address: string }) => {
+        if (isLikelyDeposit(tx as { from_address: string; to_address: string | null })) {
+          return <span className="text-rex-text-secondary">⬇️ L1 Deposit</span>
+        }
+        return <AddressDisplay address={tx.from_address} chain={chain!} />
+      },
+    },
+    {
+      header: 'To',
+      accessor: (tx: { to_address: string | null; from_address: string }) => {
+        if (isLikelyDeposit(tx)) return null
+        if (!tx.to_address) return <span>Contract Creation</span>
+        return <AddressDisplay address={tx.to_address} chain={chain!} />
+      },
+    },
+    {
+      header: 'Value',
+      accessor: (tx: { value: string }) => (
+        <span className="font-mono">{tx.value === '0' ? '0' : tx.value}</span>
+      ),
+    },
+  ]
 
   return (
     <div>
@@ -67,53 +105,17 @@ export function BlockDetailPage() {
       {txData && txData.data.length > 0 && (
         <div className="border border-rex-border rounded-lg overflow-hidden">
           <h2 className="text-lg font-semibold p-4 text-rex-text">Transactions</h2>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-rex-bg-secondary border-y border-rex-border">
-                <th className="px-4 py-2 text-left font-medium text-rex-text-secondary">Hash</th>
-                <th className="px-4 py-2 text-left font-medium text-rex-text-secondary">From</th>
-                <th className="px-4 py-2 text-left font-medium text-rex-text-secondary">To</th>
-                <th className="px-4 py-2 text-right font-medium text-rex-text-secondary">Value</th>
-              </tr>
-            </thead>
-            <tbody>
-              {txData.data.map(tx => {
-                const isDeposit = isLikelyDeposit(tx)
-
-                return (
-                  <tr key={tx.hash} className="border-b border-rex-border">
-                    <td className="px-4 py-2">
-                      <Link to={`/${chain}/tx/${tx.hash}`} className="text-rex-primary hover:underline font-mono">
-                        {tx.hash.slice(0, 10)}...
-                      </Link>
-                    </td>
-                    <td className="px-4 py-2 font-mono text-xs" colSpan={isDeposit ? 2 : 1}>
-                      {isDeposit ? (
-                        <span className="text-rex-text-secondary">⬇️ L1 Deposit</span>
-                      ) : (
-                        <Link to={`/${chain}/address/${tx.from_address}`} className="text-rex-primary hover:underline">{tx.from_address.slice(0, 10)}...</Link>
-                      )}
-                    </td>
-                    {!isDeposit && (
-                      <td className="px-4 py-2 font-mono text-xs">
-                        {tx.to_address ? (
-                          <Link to={`/${chain}/address/${tx.to_address}`} className="text-rex-primary hover:underline">{tx.to_address.slice(0, 10)}...</Link>
-                        ) : 'Contract Creation'}
-                      </td>
-                    )}
-                    <td className="px-4 py-2 text-right font-mono">{tx.value === '0' ? '0' : tx.value}</td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
+          <DataTable
+            columns={txColumns}
+            data={txData.data}
+            emptyMessage="No transactions in this block"
+          />
         </div>
       )}
     </div>
   )
 }
 
-// Detect L1 deposits: from and to are both the zero/bridge address
 function isLikelyDeposit(tx: { from_address: string; to_address: string | null }): boolean {
   const from = tx.from_address?.toLowerCase() || ''
   const to = tx.to_address?.toLowerCase() || ''
