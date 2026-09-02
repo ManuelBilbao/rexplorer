@@ -36,7 +36,7 @@
             pkgs.postgresql_18
 
             # Frontend
-            pkgs.nodejs_22
+            pkgs.nodejs_24
             pkgs.pnpm
 
             # Build tools

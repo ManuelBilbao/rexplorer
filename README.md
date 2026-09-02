@@ -16,7 +16,7 @@ A multi-chain Ethereum-like blockchain explorer built with Elixir/Phoenix and Re
 
 [Nix](https://nixos.org/download/) with flakes enabled — that is the only host
 requirement. Every `make` target runs inside `nix develop`, which provides
-Elixir 1.19 / Erlang OTP 28, PostgreSQL 18, Node.js 22 and pnpm, and starts a
+Elixir 1.19 / Erlang OTP 28, PostgreSQL 18, Node.js 24 and pnpm, and starts a
 project-local Postgres on a Unix socket in `.pg-socket` (no system service, no
 port 5432 conflict).
 

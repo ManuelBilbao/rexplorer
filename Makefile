@@ -42,7 +42,9 @@ deps: ## Fetch and compile Elixir dependencies
 	$(NIX) "cd backend && mix local.hex --force && mix local.rebar --force && mix deps.get && mix deps.compile"
 
 frontend.install: ## Install frontend dependencies
-	$(NIX) "cd frontend && pnpm install --frozen-lockfile"
+	# CI=true lets pnpm purge a stale node_modules (e.g. after a Node version
+	# bump) without prompting — targets run non-interactively under $(NIX).
+	$(NIX) "cd frontend && CI=true pnpm install --frozen-lockfile"
 
 # ── Build ────────────────────────────────────────────────────────────
 

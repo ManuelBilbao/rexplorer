@@ -7,7 +7,7 @@ runs inside, and it builds the three **release artifacts** a NixOS host runs.
 ## Development environment
 
 The only host requirement is Nix with flakes enabled. `nix develop` provides
-Elixir 1.19 on Erlang/OTP 28, PostgreSQL 18, Node.js 22 and pnpm, and its
+Elixir 1.19 on Erlang/OTP 28, PostgreSQL 18, Node.js 24 and pnpm, and its
 `shellHook` brings up a project-local Postgres.
 
 That Postgres is deliberately **not** a system service: the cluster lives in
