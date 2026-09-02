@@ -9,12 +9,12 @@ declare module 'phoenix' {
   export class Channel {
     join(): Push
     leave(): Push
-    on(event: string, callback: (payload: any) => void): number
+    on<T = unknown>(event: string, callback: (payload: T) => void): number
     off(event: string, ref?: number): void
     push(event: string, payload?: Record<string, unknown>): Push
   }
 
   export class Push {
-    receive(status: string, callback: (response?: any) => void): Push
+    receive<T = unknown>(status: string, callback: (response?: T) => void): Push
   }
 }

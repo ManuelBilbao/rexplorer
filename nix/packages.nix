@@ -69,7 +69,7 @@ let
     pname = "rexplorer-frontend-deps";
     inherit version;
     src = ../frontend;
-    hash = "sha256-ieD/tzxGvU9cv4/T9gM1cMKjMYYnd4TevT4QvfAjve4=";
+    hash = "sha256-yffoktFBYo+t4ZGTvUg0S+9/kiNtSyNWOJidokB/ebE=";
     fetcherVersion = 3;
   };
 in

@@ -104,13 +104,23 @@ test.failed: ## Re-run only failed tests
 
 # ── Security ─────────────────────────────────────────────────────────
 
-.PHONY: audit deps.outdated
+.PHONY: audit audit.backend audit.frontend deps.outdated deps.outdated.backend deps.outdated.frontend
 
-audit: ## Check dependencies against the security advisory database
+audit: audit.backend audit.frontend ## Check all dependencies against the security advisory databases
+
+audit.backend: ## Audit Elixir dependencies
 	$(NIX) "cd backend && mix hex.audit"
 
-deps.outdated: ## Show which dependencies have newer versions
+audit.frontend: ## Audit frontend dependencies
+	$(NIX) "cd frontend && pnpm audit"
+
+deps.outdated: deps.outdated.backend deps.outdated.frontend ## Show which dependencies have newer versions
+
+deps.outdated.backend: ## Show outdated Elixir dependencies
 	$(NIX) "cd backend && mix hex.outdated --all"
+
+deps.outdated.frontend: ## Show outdated frontend dependencies
+	$(NIX) "cd frontend && pnpm outdated"
 
 # ── Server ───────────────────────────────────────────────────────────
 
