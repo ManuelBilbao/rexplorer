@@ -4,7 +4,9 @@ defmodule RexplorerWeb.Internal.SearchController do
   def index(conn, %{"q" => query} = params) do
     chain_id =
       case params["chain"] do
-        nil -> nil
+        nil ->
+          nil
+
         slug ->
           case Rexplorer.Chains.get_chain_by_slug(slug) do
             {:ok, chain} -> chain.chain_id

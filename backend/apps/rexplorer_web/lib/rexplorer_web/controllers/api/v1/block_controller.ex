@@ -4,19 +4,25 @@ defmodule RexplorerWeb.API.V1.BlockController do
 
   action_fallback RexplorerWeb.FallbackController
 
-  tags ["Blocks"]
+  tags(["Blocks"])
 
-  operation :index,
+  operation(:index,
     summary: "List blocks",
-    description: "Returns a paginated list of blocks for a chain, in descending order by block number.",
+    description:
+      "Returns a paginated list of blocks for a chain, in descending order by block number.",
     parameters: [
       chain_slug: [in: :path, type: :string, description: "Chain slug", required: true],
-      before: [in: :query, type: :integer, description: "Return blocks before this block number (cursor)"],
+      before: [
+        in: :query,
+        type: :integer,
+        description: "Return blocks before this block number (cursor)"
+      ],
       limit: [in: :query, type: :integer, description: "Max results (default 25, max 100)"]
     ],
     responses: [
       ok: {"Block list", "application/json", RexplorerWeb.Schemas.BlockListResponse}
     ]
+  )
 
   def index(conn, params) do
     chain_id = conn.assigns.chain_id
@@ -30,7 +36,7 @@ defmodule RexplorerWeb.API.V1.BlockController do
     })
   end
 
-  operation :show,
+  operation(:show,
     summary: "Get block by number",
     description: "Returns a single block with its header fields and transaction count.",
     parameters: [
@@ -41,6 +47,7 @@ defmodule RexplorerWeb.API.V1.BlockController do
       ok: {"Block detail", "application/json", RexplorerWeb.Schemas.BlockResponse},
       not_found: {"Not found", "application/json", RexplorerWeb.Schemas.ErrorResponse}
     ]
+  )
 
   def show(conn, %{"number" => number_str}) do
     chain_id = conn.assigns.chain_id

@@ -35,7 +35,10 @@ defmodule Rexplorer.Decoder.Interpreter.WETH do
      %Action{
        type: :unwrap,
        protocol: "WETH",
-       params: %{from: tx_context.from_address, amount: params["wad"] || params["amount"] || params["param0"]}
+       params: %{
+         from: tx_context.from_address,
+         amount: params["wad"] || params["amount"] || params["param0"]
+       }
      }}
   end
 

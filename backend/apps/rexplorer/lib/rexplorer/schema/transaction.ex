@@ -43,7 +43,23 @@ defmodule Rexplorer.Schema.Transaction do
   @doc "Changeset for creating or updating a transaction record."
   def changeset(transaction, attrs) do
     transaction
-    |> cast(attrs, [:chain_id, :hash, :block_id, :from_address, :to_address, :value, :input, :gas_price, :gas_used, :nonce, :transaction_type, :status, :transaction_index, :chain_extra, :payer])
+    |> cast(attrs, [
+      :chain_id,
+      :hash,
+      :block_id,
+      :from_address,
+      :to_address,
+      :value,
+      :input,
+      :gas_price,
+      :gas_used,
+      :nonce,
+      :transaction_type,
+      :status,
+      :transaction_index,
+      :chain_extra,
+      :payer
+    ])
     |> validate_required([:chain_id, :hash, :block_id, :from_address, :nonce, :transaction_index])
     |> unique_constraint([:chain_id, :hash])
     |> foreign_key_constraint(:chain_id)

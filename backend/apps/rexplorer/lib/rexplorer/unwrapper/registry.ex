@@ -19,7 +19,9 @@ defmodule Rexplorer.Unwrapper.Registry do
   """
   def unwrap(transaction, chain_id) do
     case Enum.find(@unwrappers, fn mod -> mod.matches?(transaction, chain_id) end) do
-      nil -> default_operation(transaction)
+      nil ->
+        default_operation(transaction)
+
       mod ->
         case mod.unwrap(transaction, chain_id) do
           [] -> default_operation(transaction)

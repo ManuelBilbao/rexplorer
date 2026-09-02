@@ -34,7 +34,19 @@ defmodule Rexplorer.Schema.Log do
   @doc "Changeset for creating or updating a log record."
   def changeset(log, attrs) do
     log
-    |> cast(attrs, [:transaction_id, :chain_id, :log_index, :contract_address, :topic0, :topic1, :topic2, :topic3, :data, :decoded, :frame_index])
+    |> cast(attrs, [
+      :transaction_id,
+      :chain_id,
+      :log_index,
+      :contract_address,
+      :topic0,
+      :topic1,
+      :topic2,
+      :topic3,
+      :data,
+      :decoded,
+      :frame_index
+    ])
     |> validate_required([:transaction_id, :chain_id, :log_index, :contract_address])
     |> unique_constraint([:chain_id, :transaction_id, :log_index])
     |> foreign_key_constraint(:transaction_id)

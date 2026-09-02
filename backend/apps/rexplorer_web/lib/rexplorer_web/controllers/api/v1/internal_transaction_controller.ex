@@ -16,11 +16,12 @@ defmodule RexplorerWeb.API.V1.InternalTransactionController do
 
   action_fallback RexplorerWeb.FallbackController
 
-  tags ["Internal Transactions"]
+  tags(["Internal Transactions"])
 
-  operation :index,
+  operation(:index,
     summary: "List internal transactions for an address",
-    description: "Returns paginated internal transactions (value-transferring trace entries) involving the address.",
+    description:
+      "Returns paginated internal transactions (value-transferring trace entries) involving the address.",
     parameters: [
       chain_slug: [in: :path, type: :string, required: true],
       address_hash: [in: :path, type: :string, required: true],
@@ -30,6 +31,7 @@ defmodule RexplorerWeb.API.V1.InternalTransactionController do
     responses: [
       ok: {"Internal transaction list", "application/json", nil}
     ]
+  )
 
   def index(conn, %{"address_hash" => hash} = params) do
     chain_id = conn.assigns.chain_id

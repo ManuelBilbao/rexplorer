@@ -44,6 +44,7 @@ for attrs <- chains do
       %Chain{}
       |> Chain.changeset(attrs)
       |> Repo.insert!()
+
       IO.puts("Seeded chain: #{attrs.name} (#{attrs.chain_id})")
 
     _existing ->

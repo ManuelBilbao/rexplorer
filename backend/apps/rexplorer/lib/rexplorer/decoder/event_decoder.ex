@@ -219,7 +219,10 @@ defmodule Rexplorer.Decoder.EventDecoder do
   @unlimited_threshold round(:math.pow(10, 30))
 
   defp format_amount(nil, _token), do: "?"
-  defp format_amount(val, _token) when is_integer(val) and val >= @unlimited_threshold, do: "Unlimited"
+
+  defp format_amount(val, _token) when is_integer(val) and val >= @unlimited_threshold,
+    do: "Unlimited"
+
   defp format_amount(val, %{decimals: nil}), do: to_string(val)
   defp format_amount(val, token) when is_integer(val), do: format_raw(val, token.decimals)
 

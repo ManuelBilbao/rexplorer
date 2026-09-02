@@ -46,33 +46,60 @@ defmodule Rexplorer.InternalTransactionsTest do
 
   describe "list_by_address/3" do
     test "finds internal transactions by from_address" do
-      {:ok, entries, _} = InternalTransactions.list_by_address(@chain_id, "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+      {:ok, entries, _} =
+        InternalTransactions.list_by_address(
+          @chain_id,
+          "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        )
+
       assert length(entries) == 10
     end
 
     test "finds internal transactions by to_address" do
-      {:ok, entries, _} = InternalTransactions.list_by_address(@chain_id, "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")
+      {:ok, entries, _} =
+        InternalTransactions.list_by_address(
+          @chain_id,
+          "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        )
+
       assert length(entries) == 10
     end
 
     test "supports limit" do
-      {:ok, entries, cursor} = InternalTransactions.list_by_address(@chain_id, "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", limit: 3)
+      {:ok, entries, cursor} =
+        InternalTransactions.list_by_address(
+          @chain_id,
+          "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", limit: 3)
+
       assert length(entries) == 3
       assert is_integer(cursor)
     end
 
     test "supports before cursor" do
-      {:ok, entries, _} = InternalTransactions.list_by_address(@chain_id, "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", before: 105)
+      {:ok, entries, _} =
+        InternalTransactions.list_by_address(
+          @chain_id,
+          "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", before: 105)
+
       block_numbers = Enum.map(entries, & &1.block_number)
       assert Enum.all?(block_numbers, &(&1 < 105))
     end
 
     test "returns empty for unknown address" do
-      {:ok, [], nil} = InternalTransactions.list_by_address(@chain_id, "0x0000000000000000000000000000000000099999")
+      {:ok, [], nil} =
+        InternalTransactions.list_by_address(
+          @chain_id,
+          "0x0000000000000000000000000000000000099999"
+        )
     end
 
     test "results ordered by block_number descending" do
-      {:ok, entries, _} = InternalTransactions.list_by_address(@chain_id, "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+      {:ok, entries, _} =
+        InternalTransactions.list_by_address(
+          @chain_id,
+          "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        )
+
       block_numbers = Enum.map(entries, & &1.block_number)
       assert block_numbers == Enum.sort(block_numbers, :desc)
     end

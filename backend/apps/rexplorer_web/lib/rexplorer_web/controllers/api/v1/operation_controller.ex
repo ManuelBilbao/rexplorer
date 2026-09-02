@@ -7,19 +7,26 @@ defmodule RexplorerWeb.API.V1.OperationController do
   import Ecto.Query
   alias Rexplorer.{Repo, Schema.Operation, Schema.Transaction}
 
-  tags ["Operations"]
+  tags(["Operations"])
 
-  operation :index,
+  operation(:index,
     summary: "List operations for a transaction",
-    description: "Returns the user-intent operations extracted from a transaction (e.g., individual calls within a multicall, UserOperations within an AA bundle).",
+    description:
+      "Returns the user-intent operations extracted from a transaction (e.g., individual calls within a multicall, UserOperations within an AA bundle).",
     parameters: [
       chain_slug: [in: :path, type: :string, required: true],
-      transaction_hash: [in: :path, type: :string, description: "Parent transaction hash", required: true]
+      transaction_hash: [
+        in: :path,
+        type: :string,
+        description: "Parent transaction hash",
+        required: true
+      ]
     ],
     responses: [
       ok: {"Operation list", "application/json", RexplorerWeb.Schemas.OperationListResponse},
       not_found: {"Transaction not found", "application/json", RexplorerWeb.Schemas.ErrorResponse}
     ]
+  )
 
   def index(conn, %{"transaction_hash" => tx_hash}) do
     chain_id = conn.assigns.chain_id

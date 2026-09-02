@@ -43,7 +43,11 @@ defmodule Rexplorer.BalancesTest do
     end
 
     test "returns not_found for unknown address" do
-      assert {:error, :not_found} = Balances.get_current_balance(@chain_id, "0x0000000000000000000000000000000000000000")
+      assert {:error, :not_found} =
+               Balances.get_current_balance(
+                 @chain_id,
+                 "0x0000000000000000000000000000000000000000"
+               )
     end
 
     test "returns nil balance for address with no balance data" do
@@ -55,7 +59,11 @@ defmodule Rexplorer.BalancesTest do
       })
       |> Repo.insert!()
 
-      assert {:ok, nil} = Balances.get_current_balance(@chain_id, "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")
+      assert {:ok, nil} =
+               Balances.get_current_balance(
+                 @chain_id,
+                 "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+               )
     end
   end
 
@@ -87,7 +95,8 @@ defmodule Rexplorer.BalancesTest do
     end
 
     test "supports limit option", %{address: address} do
-      {:ok, entries, next_cursor} = Balances.get_balance_history(@chain_id, address.hash, limit: 3)
+      {:ok, entries, next_cursor} =
+        Balances.get_balance_history(@chain_id, address.hash, limit: 3)
 
       assert length(entries) == 3
       assert next_cursor == 103
@@ -101,7 +110,8 @@ defmodule Rexplorer.BalancesTest do
     end
 
     test "returns empty list for address with no history" do
-      {:ok, [], nil} = Balances.get_balance_history(@chain_id, "0xcccccccccccccccccccccccccccccccccccccccc")
+      {:ok, [], nil} =
+        Balances.get_balance_history(@chain_id, "0xcccccccccccccccccccccccccccccccccccccccc")
     end
   end
 end

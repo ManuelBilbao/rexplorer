@@ -32,17 +32,23 @@ defmodule Rexplorer.RPC.ClientTest do
 
   describe "call/3 with mock server" do
     test "returns result on successful RPC response" do
-      url = start_mock_rpc(fn _body ->
-        %{"jsonrpc" => "2.0", "id" => 1, "result" => "0x1312D00"}
-      end)
+      url =
+        start_mock_rpc(fn _body ->
+          %{"jsonrpc" => "2.0", "id" => 1, "result" => "0x1312D00"}
+        end)
 
       assert {:ok, "0x1312D00"} = Client.call(url, "eth_blockNumber")
     end
 
     test "returns error on JSON-RPC error response" do
-      url = start_mock_rpc(fn _body ->
-        %{"jsonrpc" => "2.0", "id" => 1, "error" => %{"code" => -32601, "message" => "Method not found"}}
-      end)
+      url =
+        start_mock_rpc(fn _body ->
+          %{
+            "jsonrpc" => "2.0",
+            "id" => 1,
+            "error" => %{"code" => -32601, "message" => "Method not found"}
+          }
+        end)
 
       assert {:error, %{code: -32601, message: "Method not found"}} =
                Client.call(url, "eth_nonExistent")
@@ -55,9 +61,10 @@ defmodule Rexplorer.RPC.ClientTest do
 
   describe "get_latest_block_number/1" do
     test "returns decoded integer" do
-      url = start_mock_rpc(fn _body ->
-        %{"jsonrpc" => "2.0", "id" => 1, "result" => "0x1312D00"}
-      end)
+      url =
+        start_mock_rpc(fn _body ->
+          %{"jsonrpc" => "2.0", "id" => 1, "result" => "0x1312D00"}
+        end)
 
       assert {:ok, 20_000_000} = Client.get_latest_block_number(url)
     end
@@ -65,20 +72,22 @@ defmodule Rexplorer.RPC.ClientTest do
 
   describe "get_block/2" do
     test "returns nil for non-existent block" do
-      url = start_mock_rpc(fn _body ->
-        %{"jsonrpc" => "2.0", "id" => 1, "result" => nil}
-      end)
+      url =
+        start_mock_rpc(fn _body ->
+          %{"jsonrpc" => "2.0", "id" => 1, "result" => nil}
+        end)
 
       assert {:ok, nil} = Client.get_block(url, 999_999_999)
     end
 
     test "sends correct params" do
-      url = start_mock_rpc(fn body ->
-        decoded = Jason.decode!(body)
-        assert decoded["method"] == "eth_getBlockByNumber"
-        assert decoded["params"] == ["0xF4240", true]
-        %{"jsonrpc" => "2.0", "id" => 1, "result" => %{"number" => "0xF4240"}}
-      end)
+      url =
+        start_mock_rpc(fn body ->
+          decoded = Jason.decode!(body)
+          assert decoded["method"] == "eth_getBlockByNumber"
+          assert decoded["params"] == ["0xF4240", true]
+          %{"jsonrpc" => "2.0", "id" => 1, "result" => %{"number" => "0xF4240"}}
+        end)
 
       assert {:ok, %{"number" => "0xF4240"}} = Client.get_block(url, 1_000_000)
     end
@@ -86,9 +95,14 @@ defmodule Rexplorer.RPC.ClientTest do
 
   describe "get_block_receipts/2" do
     test "returns list of receipts" do
-      url = start_mock_rpc(fn _body ->
-        %{"jsonrpc" => "2.0", "id" => 1, "result" => [%{"status" => "0x1", "gasUsed" => "0x5208"}]}
-      end)
+      url =
+        start_mock_rpc(fn _body ->
+          %{
+            "jsonrpc" => "2.0",
+            "id" => 1,
+            "result" => [%{"status" => "0x1", "gasUsed" => "0x5208"}]
+          }
+        end)
 
       assert {:ok, [%{"status" => "0x1"}]} = Client.get_block_receipts(url, 100)
     end

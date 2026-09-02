@@ -4,7 +4,8 @@ defmodule RexplorerWeb.Internal.TransactionDetailController do
 
   def show(conn, %{"hash" => hash, "chain_slug" => slug}) do
     with {:ok, chain} <- Rexplorer.Chains.get_chain_by_slug(slug),
-         {:ok, tx, cross_chain_links} <- Rexplorer.Transactions.get_full_transaction(chain.chain_id, hash) do
+         {:ok, tx, cross_chain_links} <-
+           Rexplorer.Transactions.get_full_transaction(chain.chain_id, hash) do
       frames =
         if Ecto.assoc_loaded?(tx.frames), do: tx.frames, else: []
 

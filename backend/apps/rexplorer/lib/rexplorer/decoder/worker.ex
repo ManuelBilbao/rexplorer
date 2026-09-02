@@ -95,7 +95,9 @@ defmodule Rexplorer.Decoder.Worker do
           token_cache = Map.get(token_caches, chain_id, %{})
 
           case EventDecoder.decode_log(log, token_cache) do
-            nil -> :ok
+            nil ->
+              :ok
+
             decoded ->
               log
               |> Ecto.Changeset.change(%{decoded: decoded})
@@ -120,9 +122,7 @@ defmodule Rexplorer.Decoder.Worker do
         |> Repo.update()
 
       {:error, reason} ->
-        Logger.warning(
-          "[Decoder] Failed to decode operation #{operation.id}: #{inspect(reason)}"
-        )
+        Logger.warning("[Decoder] Failed to decode operation #{operation.id}: #{inspect(reason)}")
 
         # Mark with current version to avoid reprocessing
         operation
@@ -138,7 +138,10 @@ defmodule Rexplorer.Decoder.Worker do
       # Mark with current version to avoid infinite retry
       try do
         operation
-        |> Ecto.Changeset.change(%{decoded_summary: nil, decoder_version: Pipeline.decoder_version()})
+        |> Ecto.Changeset.change(%{
+          decoded_summary: nil,
+          decoder_version: Pipeline.decoder_version()
+        })
         |> Repo.update()
       rescue
         _ -> :ok

@@ -94,7 +94,9 @@ defmodule Rexplorer.Transactions do
 
     query =
       if before_block && before_index do
-        where(query, [t, b],
+        where(
+          query,
+          [t, b],
           b.block_number < ^before_block or
             (b.block_number == ^before_block and t.transaction_index < ^before_index)
         )
@@ -114,8 +116,7 @@ defmodule Rexplorer.Transactions do
         last = List.last(txs)
         last_block = last.block
 
-        {txs,
-         %{before_block: last_block.block_number, before_index: last.transaction_index}}
+        {txs, %{before_block: last_block.block_number, before_index: last.transaction_index}}
       else
         {results, nil}
       end
@@ -127,8 +128,11 @@ defmodule Rexplorer.Transactions do
     import Ecto.Query
 
     Rexplorer.Schema.CrossChainLink
-    |> where([l], (l.source_chain_id == ^chain_id and l.source_tx_hash == ^tx_hash) or
-                  (l.destination_chain_id == ^chain_id and l.destination_tx_hash == ^tx_hash))
+    |> where(
+      [l],
+      (l.source_chain_id == ^chain_id and l.source_tx_hash == ^tx_hash) or
+        (l.destination_chain_id == ^chain_id and l.destination_tx_hash == ^tx_hash)
+    )
     |> Repo.all()
   end
 end

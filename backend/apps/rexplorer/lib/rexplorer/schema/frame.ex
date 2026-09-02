@@ -51,7 +51,17 @@ defmodule Rexplorer.Schema.Frame do
   @doc "Changeset for creating a frame record."
   def changeset(frame, attrs) do
     frame
-    |> cast(attrs, [:chain_id, :transaction_id, :frame_index, :mode, :target, :gas_limit, :gas_used, :status, :data])
+    |> cast(attrs, [
+      :chain_id,
+      :transaction_id,
+      :frame_index,
+      :mode,
+      :target,
+      :gas_limit,
+      :gas_used,
+      :status,
+      :data
+    ])
     |> validate_required([:chain_id, :transaction_id, :frame_index, :mode])
     |> validate_inclusion(:mode, [0, 1, 2])
     |> unique_constraint([:chain_id, :transaction_id, :frame_index])

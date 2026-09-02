@@ -58,14 +58,31 @@ defmodule Rexplorer.Decoder.ABI do
     {"Transfer(address,address,uint256)", ["from", "to", "value"], [true, true, false]},
     {"Approval(address,address,uint256)", ["owner", "spender", "value"], [true, true, false]},
     # Uniswap V2
-    {"Swap(address,uint256,uint256,uint256,uint256,address)", ["sender", "amount0In", "amount1In", "amount0Out", "amount1Out", "to"], [true, false, false, false, false, true]},
+    {"Swap(address,uint256,uint256,uint256,uint256,address)",
+     ["sender", "amount0In", "amount1In", "amount0Out", "amount1Out", "to"],
+     [true, false, false, false, false, true]},
     # Uniswap V3
-    {"Swap(address,address,int256,int256,uint160,uint128,int24)", ["sender", "recipient", "amount0", "amount1", "sqrtPriceX96", "liquidity", "tick"], [true, true, false, false, false, false, false]},
+    {"Swap(address,address,int256,int256,uint160,uint128,int24)",
+     ["sender", "recipient", "amount0", "amount1", "sqrtPriceX96", "liquidity", "tick"],
+     [true, true, false, false, false, false, false]},
     # Aave V3
-    {"Supply(address,address,address,uint256,uint16)", ["reserve", "user", "onBehalfOf", "amount", "referralCode"], [true, false, true, false, false]},
-    {"Withdraw(address,address,address,uint256)", ["reserve", "user", "to", "amount"], [true, true, true, false]},
-    {"Borrow(address,address,address,uint256,uint8,uint256,uint16)", ["reserve", "user", "onBehalfOf", "amount", "interestRateMode", "borrowRate", "referralCode"], [true, false, true, false, false, false, false]},
-    {"Repay(address,address,address,uint256,bool)", ["reserve", "user", "repayer", "amount", "useATokens"], [true, true, true, false, false]},
+    {"Supply(address,address,address,uint256,uint16)",
+     ["reserve", "user", "onBehalfOf", "amount", "referralCode"],
+     [true, false, true, false, false]},
+    {"Withdraw(address,address,address,uint256)", ["reserve", "user", "to", "amount"],
+     [true, true, true, false]},
+    {"Borrow(address,address,address,uint256,uint8,uint256,uint16)",
+     [
+       "reserve",
+       "user",
+       "onBehalfOf",
+       "amount",
+       "interestRateMode",
+       "borrowRate",
+       "referralCode"
+     ], [true, false, true, false, false, false, false]},
+    {"Repay(address,address,address,uint256,bool)",
+     ["reserve", "user", "repayer", "amount", "useATokens"], [true, true, true, false, false]},
     # WETH
     {"Deposit(address,uint256)", ["dst", "wad"], [true, false]},
     {"Withdrawal(address,uint256)", ["src", "wad"], [true, false]},
@@ -92,7 +109,18 @@ defmodule Rexplorer.Decoder.ABI do
     "supply" => ["asset", "amount", "onBehalfOf", "referralCode"],
     "borrow" => ["asset", "amount", "interestRateMode", "referralCode", "onBehalfOf"],
     "repay" => ["asset", "amount", "interestRateMode", "onBehalfOf"],
-    "execTransaction" => ["to", "value", "data", "operation", "safeTxGas", "baseGas", "gasPrice", "gasToken", "refundReceiver", "signatures"],
+    "execTransaction" => [
+      "to",
+      "value",
+      "data",
+      "operation",
+      "safeTxGas",
+      "baseGas",
+      "gasPrice",
+      "gasToken",
+      "refundReceiver",
+      "signatures"
+    ],
     "multicall" => ["data"]
   }
 

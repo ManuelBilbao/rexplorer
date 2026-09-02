@@ -4,11 +4,12 @@ defmodule RexplorerWeb.API.V1.TokenTransferController do
 
   action_fallback RexplorerWeb.FallbackController
 
-  tags ["Token Transfers"]
+  tags(["Token Transfers"])
 
-  operation :index,
+  operation(:index,
     summary: "List token transfers for an address",
-    description: "Returns paginated token transfers (ERC-20, ERC-721, native) involving the address as sender or recipient.",
+    description:
+      "Returns paginated token transfers (ERC-20, ERC-721, native) involving the address as sender or recipient.",
     parameters: [
       chain_slug: [in: :path, type: :string, required: true],
       address_hash: [in: :path, type: :string, required: true],
@@ -16,8 +17,11 @@ defmodule RexplorerWeb.API.V1.TokenTransferController do
       limit: [in: :query, type: :integer, description: "Max results (default 25, max 100)"]
     ],
     responses: [
-      ok: {"Token transfer list", "application/json", RexplorerWeb.Schemas.TokenTransferListResponse}
+      ok:
+        {"Token transfer list", "application/json",
+         RexplorerWeb.Schemas.TokenTransferListResponse}
     ]
+  )
 
   def index(conn, %{"address_hash" => address_hash} = params) do
     chain_id = conn.assigns.chain_id
@@ -45,8 +49,13 @@ defmodule RexplorerWeb.API.V1.TokenTransferController do
 
   defp parse_pagination(params) do
     opts = []
-    opts = if params["before"], do: [{:before, String.to_integer(params["before"])} | opts], else: opts
-    opts = if params["limit"], do: [{:limit, String.to_integer(params["limit"])} | opts], else: opts
+
+    opts =
+      if params["before"], do: [{:before, String.to_integer(params["before"])} | opts], else: opts
+
+    opts =
+      if params["limit"], do: [{:limit, String.to_integer(params["limit"])} | opts], else: opts
+
     opts
   end
 end

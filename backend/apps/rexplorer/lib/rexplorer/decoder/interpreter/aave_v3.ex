@@ -78,9 +78,11 @@ defmodule Rexplorer.Decoder.Interpreter.AaveV3 do
   def interpret(_, _, _), do: {:error, :unhandled_function}
 
   defp format_addr(addr) when is_binary(addr), do: String.downcase(addr)
+
   defp format_addr(addr) when is_integer(addr) do
     hex = Integer.to_string(addr, 16) |> String.downcase()
     "0x" <> String.pad_leading(hex, 40, "0")
   end
+
   defp format_addr(nil), do: nil
 end

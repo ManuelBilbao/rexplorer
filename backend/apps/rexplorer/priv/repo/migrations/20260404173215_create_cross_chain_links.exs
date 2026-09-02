@@ -5,7 +5,10 @@ defmodule Rexplorer.Repo.Migrations.CreateCrossChainLinks do
     create table(:cross_chain_links) do
       add :source_chain_id, references(:chains, column: :chain_id, type: :integer), null: false
       add :source_tx_hash, :string, null: false
-      add :destination_chain_id, references(:chains, column: :chain_id, type: :integer), null: false
+
+      add :destination_chain_id, references(:chains, column: :chain_id, type: :integer),
+        null: false
+
       add :destination_tx_hash, :string
       add :link_type, :cross_chain_link_type, null: false
       add :message_hash, :string, null: false

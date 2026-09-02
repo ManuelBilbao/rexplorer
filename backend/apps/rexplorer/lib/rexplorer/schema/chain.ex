@@ -33,7 +33,15 @@ defmodule Rexplorer.Schema.Chain do
   @doc "Changeset for creating or updating a chain record."
   def changeset(chain, attrs) do
     chain
-    |> cast(attrs, [:chain_id, :name, :chain_type, :native_token_symbol, :explorer_slug, :rpc_config, :enabled])
+    |> cast(attrs, [
+      :chain_id,
+      :name,
+      :chain_type,
+      :native_token_symbol,
+      :explorer_slug,
+      :rpc_config,
+      :enabled
+    ])
     |> validate_required([:chain_id, :name, :chain_type, :native_token_symbol, :explorer_slug])
     |> unique_constraint(:explorer_slug)
   end

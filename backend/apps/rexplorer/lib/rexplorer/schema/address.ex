@@ -29,7 +29,15 @@ defmodule Rexplorer.Schema.Address do
   @doc "Changeset for creating or updating an address record."
   def changeset(address, attrs) do
     address
-    |> cast(attrs, [:chain_id, :hash, :is_contract, :contract_code_hash, :label, :first_seen_at, :current_balance_wei])
+    |> cast(attrs, [
+      :chain_id,
+      :hash,
+      :is_contract,
+      :contract_code_hash,
+      :label,
+      :first_seen_at,
+      :current_balance_wei
+    ])
     |> validate_required([:chain_id, :hash, :first_seen_at])
     |> unique_constraint([:chain_id, :hash])
     |> foreign_key_constraint(:chain_id)

@@ -52,11 +52,29 @@ defmodule Rexplorer.Schema.InternalTransaction do
   def changeset(internal_transaction, attrs) do
     internal_transaction
     |> cast(attrs, [
-      :chain_id, :block_number, :transaction_hash, :transaction_index,
-      :trace_index, :from_address, :to_address, :value, :call_type,
-      :trace_address, :input_prefix, :error
+      :chain_id,
+      :block_number,
+      :transaction_hash,
+      :transaction_index,
+      :trace_index,
+      :from_address,
+      :to_address,
+      :value,
+      :call_type,
+      :trace_address,
+      :input_prefix,
+      :error
     ])
-    |> validate_required([:chain_id, :block_number, :transaction_hash, :transaction_index, :trace_index, :from_address, :value, :call_type])
+    |> validate_required([
+      :chain_id,
+      :block_number,
+      :transaction_hash,
+      :transaction_index,
+      :trace_index,
+      :from_address,
+      :value,
+      :call_type
+    ])
     |> validate_inclusion(:call_type, ["call", "create", "create2", "selfdestruct"])
     |> unique_constraint([:chain_id, :block_number, :transaction_index, :trace_index])
     |> foreign_key_constraint(:chain_id)

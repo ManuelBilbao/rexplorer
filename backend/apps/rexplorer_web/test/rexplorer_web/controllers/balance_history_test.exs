@@ -59,7 +59,8 @@ defmodule RexplorerWeb.BalanceHistoryTest do
     end
 
     test "supports pagination", %{conn: conn, address: address} do
-      conn = get(conn, "/internal/chains/bh-test/addresses/#{address.hash}/balance-history?limit=2")
+      conn =
+        get(conn, "/internal/chains/bh-test/addresses/#{address.hash}/balance-history?limit=2")
 
       assert %{"data" => data, "next_cursor" => cursor} = json_response(conn, 200)
       assert length(data) == 2
@@ -67,7 +68,11 @@ defmodule RexplorerWeb.BalanceHistoryTest do
     end
 
     test "returns empty for unknown address", %{conn: conn} do
-      conn = get(conn, "/internal/chains/bh-test/addresses/0x0000000000000000000000000000000000099999/balance-history")
+      conn =
+        get(
+          conn,
+          "/internal/chains/bh-test/addresses/0x0000000000000000000000000000000000099999/balance-history"
+        )
 
       assert %{"data" => [], "next_cursor" => nil} = json_response(conn, 200)
     end

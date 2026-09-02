@@ -69,6 +69,9 @@ defmodule Rexplorer.Decoder.Interpreter.UniswapV2 do
   def interpret(_, _, _), do: {:error, :unhandled_function}
 
   defp format_address(addr) when is_binary(addr), do: String.downcase(addr)
-  defp format_address(addr) when is_integer(addr), do: "0x" <> Integer.to_string(addr, 16) |> String.downcase() |> String.pad_leading(42, "0")
+
+  defp format_address(addr) when is_integer(addr),
+    do: ("0x" <> Integer.to_string(addr, 16)) |> String.downcase() |> String.pad_leading(42, "0")
+
   defp format_address(nil), do: nil
 end

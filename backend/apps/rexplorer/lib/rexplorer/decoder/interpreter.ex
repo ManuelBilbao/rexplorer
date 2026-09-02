@@ -15,7 +15,8 @@ defmodule Rexplorer.Decoder.Interpreter do
   - `decoded` — `%{function: name, params: map}` from ABI decoding
   - `chain_id` — the EIP-155 chain ID
   """
-  @callback matches?(to_address :: String.t(), decoded :: map(), chain_id :: integer()) :: boolean()
+  @callback matches?(to_address :: String.t(), decoded :: map(), chain_id :: integer()) ::
+              boolean()
 
   @doc """
   Interprets the decoded call into a semantic action.

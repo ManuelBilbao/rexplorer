@@ -12,7 +12,8 @@ defmodule RexplorerWeb.Internal.AddressOverviewController do
           is_contract: address.is_contract,
           label: address.label,
           first_seen_at: address.first_seen_at,
-          balance_wei: if(address.current_balance_wei, do: to_string(address.current_balance_wei), else: nil)
+          balance_wei:
+            if(address.current_balance_wei, do: to_string(address.current_balance_wei), else: nil)
         },
         recent_transactions:
           Enum.map(recent_txs, fn tx ->

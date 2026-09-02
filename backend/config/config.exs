@@ -29,7 +29,13 @@ config :rexplorer, Rexplorer.Chain.Registry,
 #     poll_interval_ms: 3000, bridge_address: "0x..."}
 # ]
 config :rexplorer, :ethrex_chains, [
-    %{chain_id: 65536999, name: "Ethrex L2 Dev", rpc_url: "http://localhost:1729", poll_interval_ms: 5000, bridge_address: "0x15ec25bec93b63a3c4b9ec56b2c78466a617f9a3"}
+  %{
+    chain_id: 65_536_999,
+    name: "Ethrex L2 Dev",
+    rpc_url: "http://localhost:1729",
+    poll_interval_ms: 5000,
+    bridge_address: "0x15ec25bec93b63a3c4b9ec56b2c78466a617f9a3"
+  }
 ]
 
 # Chain indexer configuration
@@ -39,9 +45,12 @@ config :rexplorer_indexer,
     1 => %{rpc_url: "http://ts.mainnet.internal.lambdaclass.com:8545/"},
     10 => %{rpc_url: "http://localhost:9545"},
     8453 => %{rpc_url: "http://localhost:9546"},
-    56 => %{rpc_url: "https://rpc.ankr.com/bsc/f5103a1046566351899224d25cc33c39cf436edc57e64416e3da1605ed62b816"},
+    56 => %{
+      rpc_url:
+        "https://rpc.ankr.com/bsc/f5103a1046566351899224d25cc33c39cf436edc57e64416e3da1605ed62b816"
+    },
     137 => %{rpc_url: "http://localhost:8547"},
-    65536999 => %{rpc_url: "http://localhost:1729"}
+    65_536_999 => %{rpc_url: "http://localhost:1729"}
   }
 
 config :rexplorer_web,

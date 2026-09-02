@@ -72,7 +72,8 @@ defmodule Rexplorer.Chain.AdaptersTest do
     end
 
     test "Base has deposit tx fields" do
-      assert Rexplorer.Chain.Base.transaction_fields() == Rexplorer.Chain.Optimism.transaction_fields()
+      assert Rexplorer.Chain.Base.transaction_fields() ==
+               Rexplorer.Chain.Optimism.transaction_fields()
     end
 
     test "Optimism has bridge contracts" do

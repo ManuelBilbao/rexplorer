@@ -31,8 +31,26 @@ defmodule Rexplorer.Schema.Block do
   @doc "Changeset for creating or updating a block record."
   def changeset(block, attrs) do
     block
-    |> cast(attrs, [:chain_id, :block_number, :hash, :parent_hash, :timestamp, :gas_used, :gas_limit, :base_fee_per_gas, :chain_extra])
-    |> validate_required([:chain_id, :block_number, :hash, :parent_hash, :timestamp, :gas_used, :gas_limit])
+    |> cast(attrs, [
+      :chain_id,
+      :block_number,
+      :hash,
+      :parent_hash,
+      :timestamp,
+      :gas_used,
+      :gas_limit,
+      :base_fee_per_gas,
+      :chain_extra
+    ])
+    |> validate_required([
+      :chain_id,
+      :block_number,
+      :hash,
+      :parent_hash,
+      :timestamp,
+      :gas_used,
+      :gas_limit
+    ])
     |> unique_constraint([:chain_id, :block_number])
     |> unique_constraint([:chain_id, :hash])
     |> foreign_key_constraint(:chain_id)

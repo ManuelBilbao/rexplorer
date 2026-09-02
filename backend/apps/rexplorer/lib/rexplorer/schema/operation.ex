@@ -20,7 +20,8 @@ defmodule Rexplorer.Schema.Operation do
   use Ecto.Schema
   import Ecto.Changeset
 
-  @type operation_type :: :call | :user_operation | :multisig_execution | :multicall_item | :delegate_call
+  @type operation_type ::
+          :call | :user_operation | :multisig_execution | :multicall_item | :delegate_call
 
   schema "operations" do
     belongs_to :transaction, Rexplorer.Schema.Transaction
@@ -44,8 +45,26 @@ defmodule Rexplorer.Schema.Operation do
   @doc "Changeset for creating or updating an operation record."
   def changeset(operation, attrs) do
     operation
-    |> cast(attrs, [:transaction_id, :chain_id, :operation_type, :operation_index, :from_address, :to_address, :value, :input, :decoded_summary, :decoder_version, :frame_index])
-    |> validate_required([:transaction_id, :chain_id, :operation_type, :operation_index, :from_address])
+    |> cast(attrs, [
+      :transaction_id,
+      :chain_id,
+      :operation_type,
+      :operation_index,
+      :from_address,
+      :to_address,
+      :value,
+      :input,
+      :decoded_summary,
+      :decoder_version,
+      :frame_index
+    ])
+    |> validate_required([
+      :transaction_id,
+      :chain_id,
+      :operation_type,
+      :operation_index,
+      :from_address
+    ])
     |> foreign_key_constraint(:transaction_id)
     |> foreign_key_constraint(:chain_id)
   end

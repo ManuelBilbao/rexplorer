@@ -10,8 +10,6 @@ defmodule Rexplorer.Unwrapper.Multicall do
 
   @behaviour Rexplorer.Unwrapper
 
-
-
   @multicall_selector <<0xAC, 0x96, 0x50, 0xD8>>
   @multicall_deadline_selector <<0x5A, 0xE4, 0x01, 0xDC>>
 

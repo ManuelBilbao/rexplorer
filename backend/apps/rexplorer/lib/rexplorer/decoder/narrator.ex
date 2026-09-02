@@ -23,7 +23,12 @@ defmodule Rexplorer.Decoder.Narrator do
     parts = [actor, "swapped"]
     parts = if amount_in, do: parts ++ [amount_in, token_in.symbol], else: parts
     parts = parts ++ ["for"]
-    parts = if amount_out, do: parts ++ [amount_out, token_out.symbol], else: parts ++ [token_out.symbol]
+
+    parts =
+      if amount_out,
+        do: parts ++ [amount_out, token_out.symbol],
+        else: parts ++ [token_out.symbol]
+
     parts = parts ++ ["on", protocol]
 
     Enum.join(parts, " ")
@@ -140,7 +145,8 @@ defmodule Rexplorer.Decoder.Narrator do
 
   defp format_token_amount(nil, _token), do: "?"
 
-  defp format_token_amount(amount, _token) when is_integer(amount) and amount >= @unlimited_threshold do
+  defp format_token_amount(amount, _token)
+       when is_integer(amount) and amount >= @unlimited_threshold do
     "Unlimited"
   end
 

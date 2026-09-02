@@ -19,7 +19,13 @@ defmodule Rexplorer.Repo.Migrations.CreateInternalTransactions do
       timestamps()
     end
 
-    create unique_index(:internal_transactions, [:chain_id, :block_number, :transaction_index, :trace_index])
+    create unique_index(:internal_transactions, [
+             :chain_id,
+             :block_number,
+             :transaction_index,
+             :trace_index
+           ])
+
     create index(:internal_transactions, [:chain_id, :from_address, :block_number])
     create index(:internal_transactions, [:chain_id, :to_address, :block_number])
   end

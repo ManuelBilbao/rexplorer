@@ -42,8 +42,23 @@ defmodule Rexplorer.Schema.CrossChainLink do
   @doc "Changeset for creating or updating a cross-chain link."
   def changeset(link, attrs) do
     link
-    |> cast(attrs, [:source_chain_id, :source_tx_hash, :destination_chain_id, :destination_tx_hash, :link_type, :message_hash, :status])
-    |> validate_required([:source_chain_id, :source_tx_hash, :destination_chain_id, :link_type, :message_hash, :status])
+    |> cast(attrs, [
+      :source_chain_id,
+      :source_tx_hash,
+      :destination_chain_id,
+      :destination_tx_hash,
+      :link_type,
+      :message_hash,
+      :status
+    ])
+    |> validate_required([
+      :source_chain_id,
+      :source_tx_hash,
+      :destination_chain_id,
+      :link_type,
+      :message_hash,
+      :status
+    ])
     |> foreign_key_constraint(:source_chain_id)
     |> foreign_key_constraint(:destination_chain_id)
   end

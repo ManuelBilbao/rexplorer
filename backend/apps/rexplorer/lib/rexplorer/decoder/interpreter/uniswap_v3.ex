@@ -5,7 +5,10 @@ defmodule Rexplorer.Decoder.Interpreter.UniswapV3 do
   alias Rexplorer.Decoder.Action
 
   @router_addresses %{
-    1 => ["0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45", "0xe592427a0aece92de3edee1f18e0157c05861564"],
+    1 => [
+      "0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45",
+      "0xe592427a0aece92de3edee1f18e0157c05861564"
+    ],
     10 => ["0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45"],
     8453 => ["0x2626664c2603336e57b271c5c0b26f421741e481"],
     56 => ["0xb971ef87ede563556b2ed4b1c0b0019111dd85d2"],
@@ -88,6 +91,7 @@ defmodule Rexplorer.Decoder.Interpreter.UniswapV3 do
     cond do
       is_map(params["params"]) ->
         p = params["params"]
+
         %{
           token_in: format_addr(p["tokenIn"] || p["param0"]),
           token_out: format_addr(p["tokenOut"] || p["param1"]),
@@ -97,8 +101,10 @@ defmodule Rexplorer.Decoder.Interpreter.UniswapV3 do
 
       true ->
         p0 = params["param0"]
+
         if is_tuple(p0) do
           list = Tuple.to_list(p0)
+
           %{
             token_in: format_addr(Enum.at(list, 0)),
             token_out: format_addr(Enum.at(list, 1)),
@@ -112,9 +118,11 @@ defmodule Rexplorer.Decoder.Interpreter.UniswapV3 do
   end
 
   defp format_addr(addr) when is_binary(addr), do: String.downcase(addr)
+
   defp format_addr(addr) when is_integer(addr) do
     hex = Integer.to_string(addr, 16) |> String.downcase()
     "0x" <> String.pad_leading(hex, 40, "0")
   end
+
   defp format_addr(nil), do: nil
 end

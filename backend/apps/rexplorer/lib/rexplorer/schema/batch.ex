@@ -31,7 +31,15 @@ defmodule Rexplorer.Schema.Batch do
   @doc "Changeset for creating or updating a batch record."
   def changeset(batch, attrs) do
     batch
-    |> cast(attrs, [:chain_id, :batch_number, :first_block, :last_block, :status, :commit_tx_hash, :verify_tx_hash])
+    |> cast(attrs, [
+      :chain_id,
+      :batch_number,
+      :first_block,
+      :last_block,
+      :status,
+      :commit_tx_hash,
+      :verify_tx_hash
+    ])
     |> validate_required([:chain_id, :batch_number, :first_block, :last_block, :status])
     |> unique_constraint([:chain_id, :batch_number])
     |> foreign_key_constraint(:chain_id)

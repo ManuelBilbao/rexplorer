@@ -5,6 +5,7 @@ defmodule RexplorerWeb.Schemas do
 
   defmodule ErrorResponse do
     require OpenApiSpex
+
     OpenApiSpex.schema(%{
       title: "ErrorResponse",
       type: :object,
@@ -18,13 +19,17 @@ defmodule RexplorerWeb.Schemas do
 
   defmodule Chain do
     require OpenApiSpex
+
     OpenApiSpex.schema(%{
       title: "Chain",
       type: :object,
       properties: %{
         chain_id: %Schema{type: :integer, description: "EIP-155 chain ID", example: 1},
         name: %Schema{type: :string, example: "Ethereum"},
-        chain_type: %Schema{type: :string, enum: ["l1", "optimistic_rollup", "zk_rollup", "sidechain"]},
+        chain_type: %Schema{
+          type: :string,
+          enum: ["l1", "optimistic_rollup", "zk_rollup", "sidechain"]
+        },
         native_token_symbol: %Schema{type: :string, example: "ETH"},
         explorer_slug: %Schema{type: :string, example: "ethereum"}
       },
@@ -34,6 +39,7 @@ defmodule RexplorerWeb.Schemas do
 
   defmodule ChainListResponse do
     require OpenApiSpex
+
     OpenApiSpex.schema(%{
       title: "ChainListResponse",
       type: :object,
@@ -45,6 +51,7 @@ defmodule RexplorerWeb.Schemas do
 
   defmodule ChainResponse do
     require OpenApiSpex
+
     OpenApiSpex.schema(%{
       title: "ChainResponse",
       type: :object,
@@ -56,6 +63,7 @@ defmodule RexplorerWeb.Schemas do
 
   defmodule Block do
     require OpenApiSpex
+
     OpenApiSpex.schema(%{
       title: "Block",
       type: :object,
@@ -75,18 +83,24 @@ defmodule RexplorerWeb.Schemas do
 
   defmodule BlockListResponse do
     require OpenApiSpex
+
     OpenApiSpex.schema(%{
       title: "BlockListResponse",
       type: :object,
       properties: %{
         data: %Schema{type: :array, items: Block},
-        next_cursor: %Schema{type: :integer, nullable: true, description: "Block number cursor for next page"}
+        next_cursor: %Schema{
+          type: :integer,
+          nullable: true,
+          description: "Block number cursor for next page"
+        }
       }
     })
   end
 
   defmodule BlockResponse do
     require OpenApiSpex
+
     OpenApiSpex.schema(%{
       title: "BlockResponse",
       type: :object,
@@ -98,6 +112,7 @@ defmodule RexplorerWeb.Schemas do
 
   defmodule Transaction do
     require OpenApiSpex
+
     OpenApiSpex.schema(%{
       title: "Transaction",
       type: :object,
@@ -120,18 +135,24 @@ defmodule RexplorerWeb.Schemas do
 
   defmodule TransactionListResponse do
     require OpenApiSpex
+
     OpenApiSpex.schema(%{
       title: "TransactionListResponse",
       type: :object,
       properties: %{
         data: %Schema{type: :array, items: Transaction},
-        next_cursor: %Schema{type: :object, nullable: true, description: "Cursor with before_block and before_index"}
+        next_cursor: %Schema{
+          type: :object,
+          nullable: true,
+          description: "Cursor with before_block and before_index"
+        }
       }
     })
   end
 
   defmodule TransactionResponse do
     require OpenApiSpex
+
     OpenApiSpex.schema(%{
       title: "TransactionResponse",
       type: :object,
@@ -143,22 +164,37 @@ defmodule RexplorerWeb.Schemas do
 
   defmodule Operation do
     require OpenApiSpex
+
     OpenApiSpex.schema(%{
       title: "Operation",
       type: :object,
       properties: %{
-        operation_type: %Schema{type: :string, enum: ["call", "user_operation", "multisig_execution", "multicall_item", "delegate_call"]},
+        operation_type: %Schema{
+          type: :string,
+          enum: [
+            "call",
+            "user_operation",
+            "multisig_execution",
+            "multicall_item",
+            "delegate_call"
+          ]
+        },
         operation_index: %Schema{type: :integer},
         from_address: %Schema{type: :string},
         to_address: %Schema{type: :string, nullable: true},
         value: %Schema{type: :string, description: "Wei value as decimal string"},
-        decoded_summary: %Schema{type: :string, nullable: true, description: "Human-readable description of what this operation did"}
+        decoded_summary: %Schema{
+          type: :string,
+          nullable: true,
+          description: "Human-readable description of what this operation did"
+        }
       }
     })
   end
 
   defmodule OperationListResponse do
     require OpenApiSpex
+
     OpenApiSpex.schema(%{
       title: "OperationListResponse",
       type: :object,
@@ -170,6 +206,7 @@ defmodule RexplorerWeb.Schemas do
 
   defmodule Address do
     require OpenApiSpex
+
     OpenApiSpex.schema(%{
       title: "Address",
       type: :object,
@@ -184,6 +221,7 @@ defmodule RexplorerWeb.Schemas do
 
   defmodule AddressResponse do
     require OpenApiSpex
+
     OpenApiSpex.schema(%{
       title: "AddressResponse",
       type: :object,
@@ -195,6 +233,7 @@ defmodule RexplorerWeb.Schemas do
 
   defmodule TokenTransfer do
     require OpenApiSpex
+
     OpenApiSpex.schema(%{
       title: "TokenTransfer",
       type: :object,
@@ -211,12 +250,17 @@ defmodule RexplorerWeb.Schemas do
 
   defmodule TokenTransferListResponse do
     require OpenApiSpex
+
     OpenApiSpex.schema(%{
       title: "TokenTransferListResponse",
       type: :object,
       properties: %{
         data: %Schema{type: :array, items: TokenTransfer},
-        next_cursor: %Schema{type: :integer, nullable: true, description: "ID cursor for next page"}
+        next_cursor: %Schema{
+          type: :integer,
+          nullable: true,
+          description: "ID cursor for next page"
+        }
       }
     })
   end

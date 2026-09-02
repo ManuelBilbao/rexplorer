@@ -16,9 +16,9 @@ defmodule RexplorerWeb.API.V1.BalanceHistoryController do
 
   action_fallback RexplorerWeb.FallbackController
 
-  tags ["Addresses"]
+  tags(["Addresses"])
 
-  operation :index,
+  operation(:index,
     summary: "Get address balance history",
     description: "Returns historical native-token balance data points for charting.",
     parameters: [
@@ -31,6 +31,7 @@ defmodule RexplorerWeb.API.V1.BalanceHistoryController do
       ok: {"Balance history", "application/json", nil},
       not_found: {"Not found", "application/json", RexplorerWeb.Schemas.ErrorResponse}
     ]
+  )
 
   def index(conn, %{"address_hash" => hash} = params) do
     chain_id = conn.assigns.chain_id

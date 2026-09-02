@@ -42,8 +42,11 @@ defmodule Rexplorer.Decoder.Pipeline do
       inner_summary = decode_inner(input, to_address, tx_context, chain_id, token_cache)
 
       case inner_summary do
-        {:ok, summary} -> {:ok, wrap_with_context(summary, operation_type, operation.from_address)}
-        {:error, reason} -> {:error, reason}
+        {:ok, summary} ->
+          {:ok, wrap_with_context(summary, operation_type, operation.from_address)}
+
+        {:error, reason} ->
+          {:error, reason}
       end
     end
   end
@@ -65,7 +68,9 @@ defmodule Rexplorer.Decoder.Pipeline do
             # Plain value transfer (no calldata)
             amount = tx_context.value
             symbol = native_token_symbol(chain_id)
-            {:ok, "#{tx_context.from_address} transferred #{Narrator.format_native_amount(amount)} #{symbol} to #{to_address}"}
+
+            {:ok,
+             "#{tx_context.from_address} transferred #{Narrator.format_native_amount(amount)} #{symbol} to #{to_address}"}
 
           true ->
             selector_hex =
@@ -100,7 +105,10 @@ defmodule Rexplorer.Decoder.Pipeline do
   end
 
   defp get_operation_type(%{operation_type: type}) when is_atom(type), do: type
-  defp get_operation_type(%{operation_type: type}) when is_binary(type), do: String.to_existing_atom(type)
+
+  defp get_operation_type(%{operation_type: type}) when is_binary(type),
+    do: String.to_existing_atom(type)
+
   defp get_operation_type(_), do: :call
 
   defp decimal_to_integer(%Decimal{} = d), do: Decimal.to_integer(d)

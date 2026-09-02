@@ -76,8 +76,21 @@ defmodule Rexplorer.Chain.EthrexTest do
   end
 
   test "multiple Ethrex chains can coexist" do
-    config_a = [chain_id: 88881, name: "Ethrex A", rpc_url: "http://a", poll_interval_ms: 2000, bridge_address: "0xa"]
-    config_b = [chain_id: 88882, name: "Ethrex B", rpc_url: "http://b", poll_interval_ms: 3000, bridge_address: "0xb"]
+    config_a = [
+      chain_id: 88881,
+      name: "Ethrex A",
+      rpc_url: "http://a",
+      poll_interval_ms: 2000,
+      bridge_address: "0xa"
+    ]
+
+    config_b = [
+      chain_id: 88882,
+      name: "Ethrex B",
+      rpc_url: "http://b",
+      poll_interval_ms: 3000,
+      bridge_address: "0xb"
+    ]
 
     mod_a = Ethrex.create_adapter(config_a)
     mod_b = Ethrex.create_adapter(config_b)
