@@ -14,27 +14,26 @@ A multi-chain Ethereum-like blockchain explorer built with Elixir/Phoenix and Re
 
 ### Prerequisites
 
-- Elixir 1.19+ / Erlang/OTP 28+
-- PostgreSQL 15+
-- Node.js 22+
+[Nix](https://nixos.org/download/) with flakes enabled — that is the only host
+requirement. Every `make` target runs inside `nix develop`, which provides
+Elixir 1.19 / Erlang OTP 28, PostgreSQL 18, Node.js 22 and pnpm, and starts a
+project-local Postgres on a Unix socket in `.pg-socket` (no system service, no
+port 5432 conflict).
+
+If you use [direnv](https://direnv.net/), `direnv allow` loads the same
+environment automatically on `cd`.
 
 ### Setup
 
 ```bash
 git clone <repo-url> rexplorer && cd rexplorer
 
-# Install all dependencies (Elixir + Node)
+# Elixir deps + database + frontend deps, all inside Nix
 make setup
-
-# Or step by step:
-(cd backend && mix deps.get)    # Elixir dependencies
-(cd frontend && npm install)    # Frontend dependencies
-
-cd backend
-mix ecto.create                 # Create database
-mix ecto.migrate                # Run migrations
-mix run apps/rexplorer/priv/repo/seeds.exs  # Seed chains
 ```
+
+`make shell` drops you into an interactive dev shell if you would rather run
+`mix` and `pnpm` by hand.
 
 ### Run
 
@@ -70,6 +69,7 @@ rexplorer/
 │   │   └── rexplorer_web/       Phoenix web — public API, BFF API, channels, Swagger
 │   └── config/                  Shared configuration
 ├── frontend/                    React SPA — custom component library, pages, real-time hooks
+├── nix/                         Nix packages and the NixOS deployment module
 ├── docs/                        Architecture docs, workflow diagrams, API reference
 └── openspec/                    Change management and decision records
 ```
@@ -109,6 +109,7 @@ rexplorer/
 | [`docs/rpc-client.md`](docs/rpc-client.md) | RPC client API and configuration |
 | [`docs/frontend.md`](docs/frontend.md) | Frontend architecture and data flow |
 | [`frontend/README.md`](frontend/README.md) | Frontend setup, stack, component library |
+| [`docs/deployment.md`](docs/deployment.md) | Nix dev shell, release artifacts, NixOS deployment |
 
 ### Workflow Diagrams (Mermaid)
 
@@ -120,15 +121,54 @@ rexplorer/
 | [`docs/workflows/address-view.md`](docs/workflows/address-view.md) | How the address page assembles its data |
 | [`docs/workflows/api-request.md`](docs/workflows/api-request.md) | Request flow through the API layer |
 | [`docs/workflows/realtime-subscription.md`](docs/workflows/realtime-subscription.md) | WebSocket channel subscription flow |
+| [`docs/deployment.md`](docs/deployment.md) | Dev shell startup, request routing, scale-out topology |
 
 ### Decision Records
 
 Architectural decisions are preserved in `openspec/changes/archive/`. Each change includes a proposal (why), design (how), specs (what), and tasks (implementation checklist).
 
+## Deployment (Nix / NixOS)
+
+The flake produces three artifacts:
+
+| Output | What it is |
+|--------|-----------|
+| `.#rexplorer-web` | Mix release of the Phoenix web tier (`bin/rexplorer_web`) |
+| `.#rexplorer-indexer` | Mix release of the indexer tier (`bin/rexplorer_indexer`) |
+| `.#rexplorer-frontend` | Static React bundle |
+
+```bash
+make nix.build           # Build all three
+```
+
+The web and indexer ship as separate releases so they can be scaled
+independently, matching the umbrella's app boundaries.
+
+`nixosModules.rexplorer` wires them into systemd units, PostgreSQL, and an
+Nginx vhost that serves the SPA and proxies `/api`, `/internal`, `/swaggerui`
+and the `/socket` WebSocket to Phoenix. See
+[`nix/server-example.nix`](nix/server-example.nix) for a complete host config.
+
+```nix
+services.rexplorer = {
+  enable = true;
+  domain = "explorer.example.com";
+  frontendPath = "/opt/rexplorer/frontend";
+  envFile = "/etc/rexplorer/env";   # DATABASE_URL + SECRET_KEY_BASE
+  nginx.acmeEmail = "admin@example.com";
+};
+```
+
+Set `enableIndexer = false` on web-only nodes so one database is not indexed
+by several machines at once.
+
 ## Makefile Reference
+
+Every target runs inside `nix develop`.
 
 ```bash
 make help                # Show all available commands
+make shell               # Interactive Nix dev shell
 make setup               # Full project setup (deps + DB + frontend)
 make server              # Start Phoenix server
 make test                # Run Elixir tests
@@ -136,6 +176,8 @@ make frontend.dev        # Start frontend dev server
 make frontend.build      # Build frontend for production
 make frontend.typecheck  # TypeScript type checking
 make db.reset            # Drop, create, migrate, and seed database
+make services.start      # Start the project-local Postgres
+make nix.build           # Build release artifacts
 ```
 
 ## License

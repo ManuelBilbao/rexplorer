@@ -2,5 +2,21 @@
 /frontend/node_modules/
 /frontend/dist/
 
+# Nix
+/result
+/result-*
+.direnv/
+
+# Nix dev shell state (project-local Mix/Hex/Postgres)
+.nix-mix/
+.nix-hex/
+.pg-data/
+.pg-socket/
+
+# Local env overrides
+.env
+.env.*
+!.env.example
+
 # Editor
 .DS_Store

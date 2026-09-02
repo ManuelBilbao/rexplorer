@@ -2,6 +2,13 @@ This is a web application written using the Phoenix web framework.
 
 ## Project guidelines
 
+- This umbrella lives in `backend/`. The toolchain comes from Nix: run commands
+  through the repo-root `Makefile` (`make test`, `make compile`, `make format`),
+  or prefix them yourself with `nix develop --command bash -c "cd backend && …"`.
+  Bare `mix` on the host is not the supported path.
+- The dev database is a project-local Postgres on a Unix socket started by the
+  Nix shell; `config/dev.exs` and `config/test.exs` read `PGHOST`/`PGUSER` to
+  find it, and fall back to TCP `postgres:postgres@localhost` when unset.
 - Use `mix precommit` alias when you are done with all changes and fix any pending issues
 - Use the already included and available `:req` (`Req`) library for HTTP requests, **avoid** `:httpoison`, `:tesla`, and `:httpc`. Req is included by default and is the preferred HTTP client for Phoenix apps
 

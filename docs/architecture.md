@@ -15,9 +15,14 @@ rexplorer/
 │   │   └── rexplorer_web/       # Phoenix web layer (controllers, views, channels)
 │   └── config/                  # Shared configuration (all apps)
 ├── frontend/                    # React SPA
+├── nix/                         # Nix packages + NixOS deployment module
 ├── docs/                        # Project documentation
 └── openspec/                    # Change management artifacts
 ```
+
+The umbrella root is `backend/`; `flake.nix` at the repository root defines the
+dev shell every `make` target runs inside and builds the release artifacts.
+See [`deployment.md`](deployment.md).
 
 ### App Responsibilities
 

@@ -5,7 +5,7 @@ React + TypeScript + Vite frontend for the rexplorer blockchain explorer.
 ## Setup
 
 ```bash
-make frontend.install    # or: cd frontend && npm install
+make frontend.install    # or: cd frontend && pnpm install
 ```
 
 ## Development

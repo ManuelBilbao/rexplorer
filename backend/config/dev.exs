@@ -1,14 +1,27 @@
 import Config
 
-# Configure your database
-config :rexplorer, Rexplorer.Repo,
-  username: "postgres",
-  password: "postgres",
-  hostname: "localhost",
-  database: "rexplorer_dev",
-  stacktrace: true,
-  show_sensitive_data_on_connection_error: true,
-  pool_size: 10
+# Database connection.
+#
+# Inside the Nix dev shell PGHOST points at a project-local Unix socket
+# directory (.pg-socket), so we connect over that socket as the current OS
+# user. Outside Nix we fall back to a conventional TCP postgres/postgres.
+db_connection =
+  case System.get_env("PGHOST") do
+    nil ->
+      [hostname: "localhost", username: "postgres", password: "postgres"]
+
+    socket_dir ->
+      [socket_dir: socket_dir, username: System.get_env("PGUSER") || System.get_env("USER")]
+  end
+
+config :rexplorer,
+       Rexplorer.Repo,
+       [
+         database: System.get_env("PGDATABASE") || "rexplorer_dev",
+         stacktrace: true,
+         show_sensitive_data_on_connection_error: true,
+         pool_size: 10
+       ] ++ db_connection
 
 # For development, we disable any cache and enable
 # debugging and code reloading.

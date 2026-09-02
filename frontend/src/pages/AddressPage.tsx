@@ -16,7 +16,7 @@
  */
 
 import { useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { useParams } from 'react-router'
 import { useChain } from '../hooks/useChain'
 import { useAddressOverview, useBalanceHistory, useTransactions, useAddressTokenTransfers, useAddressInternalTransactions } from '../api/queries'
 import { BalanceChart } from '../components/explorer/BalanceChart'
@@ -329,7 +329,7 @@ function InternalTransactionsList({ chain, hash }: { chain: string | null; hash:
         ))}
       </div>
 
-      {data?.next_cursor && (
+      {data?.next_cursor != null && (
         <div className="mt-4 text-center">
           <Button
             variant="outline"

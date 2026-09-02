@@ -1,22 +1,22 @@
 ## ADDED Requirements
 
 ### Requirement: Project setup
-The system SHALL have a `frontend/` directory at the repository root containing a Vite + React + TypeScript project. It MUST include Tailwind CSS configured with dark mode (`class` strategy). The project MUST be buildable with `npm run build` and runnable in development with `npm run dev`.
+The system SHALL have a `frontend/` directory at the repository root containing a Vite + React + TypeScript project. It MUST include Tailwind CSS configured with dark mode (`class` strategy). The project MUST be buildable with `pnpm run build` and runnable in development with `pnpm run dev`.
 
 #### Scenario: Development server starts
-- **WHEN** `npm run dev` is run in the `frontend/` directory
+- **WHEN** `pnpm run dev` is run in the `frontend/` directory
 - **THEN** the Vite dev server starts and proxies API requests to the Phoenix backend
 
 #### Scenario: Production build
-- **WHEN** `npm run build` is run
+- **WHEN** `pnpm run build` is run
 - **THEN** optimized static assets are generated in `frontend/dist/`
 
 ### Requirement: Makefile integration
-The Makefile at the repository root MUST include targets: `frontend.install` (npm install), `frontend.dev` (start dev server), `frontend.build` (production build).
+The Makefile at the repository root MUST include targets: `frontend.install` (pnpm install), `frontend.dev` (start dev server), `frontend.build` (production build).
 
 #### Scenario: Full project setup
 - **WHEN** `make setup` is run
-- **THEN** both Elixir deps and npm packages are installed
+- **THEN** both Elixir deps and pnpm packages are installed
 
 ### Requirement: Routing structure
 The system SHALL use React Router with the following route structure:

@@ -8,7 +8,22 @@ defmodule Rexplorer.Umbrella.MixProject do
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       aliases: aliases(),
+      releases: releases(),
       listeners: [Phoenix.CodeReloader]
+    ]
+  end
+
+  # Umbrella projects must declare their releases explicitly. The web and
+  # indexer tiers ship as separate releases so they can be deployed and
+  # scaled independently; both bundle the shared `rexplorer` core.
+  defp releases do
+    [
+      rexplorer_web: [
+        applications: [rexplorer: :permanent, rexplorer_web: :permanent]
+      ],
+      rexplorer_indexer: [
+        applications: [rexplorer: :permanent, rexplorer_indexer: :permanent]
+      ]
     ]
   end
 
