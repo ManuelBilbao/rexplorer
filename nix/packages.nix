@@ -12,7 +12,7 @@ let
   mixFodDeps = beamPackages.fetchMixDeps {
     pname = "rexplorer-mix-deps";
     inherit version elixir src;
-    hash = "sha256-yT8+d/ki1or/4XbLPdjE9Ije4ZZ0mHCq/FhaQn6z5og=";
+    hash = "sha256-dzbTOcZRebV+P2ONPV1gvDm48RX4nGFa4wqv7jLo5rw=";
   };
 
   # Prefetch the precompiled Rust NIF for ex_keccak (pulled in by ex_abi).

@@ -102,6 +102,16 @@ test.cover: ## Run tests with coverage
 test.failed: ## Re-run only failed tests
 	$(NIX) "cd backend && mix test --failed"
 
+# ── Security ─────────────────────────────────────────────────────────
+
+.PHONY: audit deps.outdated
+
+audit: ## Check dependencies against the security advisory database
+	$(NIX) "cd backend && mix hex.audit"
+
+deps.outdated: ## Show which dependencies have newer versions
+	$(NIX) "cd backend && mix hex.outdated --all"
+
 # ── Server ───────────────────────────────────────────────────────────
 
 .PHONY: server console
@@ -130,7 +140,7 @@ frontend.lint: ## Lint the frontend
 
 # ── Nix builds ───────────────────────────────────────────────────────
 
-.PHONY: nix.build nix.build.web nix.build.indexer nix.build.frontend nix.check nix.update nix.hash.mix nix.hash.pnpm
+.PHONY: nix.build nix.build.web nix.build.indexer nix.build.frontend nix.check nix.update nix.hash nix.hash.mix nix.hash.pnpm
 
 nix.build: nix.build.web nix.build.indexer nix.build.frontend ## Build all release artifacts
 
@@ -149,15 +159,13 @@ nix.check: ## Evaluate the flake
 nix.update: ## Update flake inputs
 	nix flake update
 
-nix.hash.mix: ## Print the correct mix deps hash (paste into nix/packages.nix)
-	@h=$$(nix build .#rexplorer-web 2>&1 | awk '/got:/ {print $$2}' | tail -1); \
-	if [ -n "$$h" ]; then echo "$$h"; \
-	else echo "no mismatch — the hash in nix/packages.nix is already correct"; fi
+nix.hash: nix.hash.mix nix.hash.pnpm ## Refresh both dependency hashes in nix/packages.nix
 
-nix.hash.pnpm: ## Print the correct pnpm deps hash (paste into nix/packages.nix)
-	@h=$$(nix build .#rexplorer-frontend 2>&1 | awk '/got:/ {print $$2}' | tail -1); \
-	if [ -n "$$h" ]; then echo "$$h"; \
-	else echo "no mismatch — the hash in nix/packages.nix is already correct"; fi
+nix.hash.mix: ## Refresh the mix deps hash (REQUIRED after changing backend/mix.lock)
+	@nix/refresh-hash.sh rexplorer-mix-deps .#rexplorer-web
+
+nix.hash.pnpm: ## Refresh the pnpm deps hash (REQUIRED after changing frontend/pnpm-lock.yaml)
+	@nix/refresh-hash.sh rexplorer-frontend-deps .#rexplorer-frontend
 
 # ── Clean ────────────────────────────────────────────────────────────
 
