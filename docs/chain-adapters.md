@@ -203,7 +203,7 @@ end
 
 ### Step 2: Register the adapter
 
-Add the module to the adapter list in `config/config.exs`:
+Add the module to the adapter list in `backend/config/config.exs`:
 
 ```elixir
 config :rexplorer, Rexplorer.Chain.Registry,

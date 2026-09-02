@@ -63,7 +63,7 @@ The client also exposes hex encoding/decoding utilities:
 The RPC client is stateless — it takes a URL as its first argument. RPC URLs are configured per-chain in the indexer config:
 
 ```elixir
-# config/config.exs
+# backend/config/config.exs
 config :rexplorer_indexer,
   chains: %{
     1 => %{rpc_url: "http://localhost:8545"},

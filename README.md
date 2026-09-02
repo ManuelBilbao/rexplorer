@@ -27,8 +27,10 @@ git clone <repo-url> rexplorer && cd rexplorer
 make setup
 
 # Or step by step:
-mix deps.get                    # Elixir dependencies
-cd frontend && npm install      # Frontend dependencies
+(cd backend && mix deps.get)    # Elixir dependencies
+(cd frontend && npm install)    # Frontend dependencies
+
+cd backend
 mix ecto.create                 # Create database
 mix ecto.migrate                # Run migrations
 mix run apps/rexplorer/priv/repo/seeds.exs  # Seed chains
@@ -61,14 +63,15 @@ make frontend.build        # Verify frontend builds
 
 ```
 rexplorer/
-├── apps/
-│   ├── rexplorer/           Core domain — schemas, chain adapters, RPC client, query modules
-│   ├── rexplorer_indexer/   Chain data ingestion — per-chain workers, block processor
-│   └── rexplorer_web/       Phoenix web — public API, BFF API, channels, Swagger
-├── frontend/                React SPA — custom component library, pages, real-time hooks
-├── config/                  Shared configuration
-├── docs/                    Architecture docs, workflow diagrams, API reference
-└── openspec/                Change management and decision records
+├── backend/                     Elixir umbrella — API, indexer, domain logic
+│   ├── apps/
+│   │   ├── rexplorer/           Core domain — schemas, chain adapters, RPC client, query modules
+│   │   ├── rexplorer_indexer/   Chain data ingestion — per-chain workers, block processor
+│   │   └── rexplorer_web/       Phoenix web — public API, BFF API, channels, Swagger
+│   └── config/                  Shared configuration
+├── frontend/                    React SPA — custom component library, pages, real-time hooks
+├── docs/                        Architecture docs, workflow diagrams, API reference
+└── openspec/                    Change management and decision records
 ```
 
 ### Umbrella Apps

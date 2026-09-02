@@ -86,7 +86,7 @@ sequenceDiagram
 
 ## Configuration
 
-RPC endpoints are configured per-chain in `config/config.exs`:
+RPC endpoints are configured per-chain in `backend/config/config.exs`:
 
 ```elixir
 config :rexplorer_indexer,

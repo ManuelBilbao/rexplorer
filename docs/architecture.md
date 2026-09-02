@@ -8,13 +8,15 @@ Rexplorer is a multi-chain Ethereum-like blockchain explorer built with Elixir a
 
 ```
 rexplorer/
-├── apps/
-│   ├── rexplorer/           # Core domain — schemas, chain adapters, business logic
-│   ├── rexplorer_indexer/   # Chain data ingestion (no web dependencies)
-│   └── rexplorer_web/       # Phoenix web layer (controllers, views, channels)
-├── config/                  # Shared configuration (all apps)
-├── docs/                    # Project documentation
-└── openspec/                # Change management artifacts
+├── backend/                     # Elixir umbrella
+│   ├── apps/
+│   │   ├── rexplorer/           # Core domain — schemas, chain adapters, business logic
+│   │   ├── rexplorer_indexer/   # Chain data ingestion (no web dependencies)
+│   │   └── rexplorer_web/       # Phoenix web layer (controllers, views, channels)
+│   └── config/                  # Shared configuration (all apps)
+├── frontend/                    # React SPA
+├── docs/                        # Project documentation
+└── openspec/                    # Change management artifacts
 ```
 
 ### App Responsibilities
