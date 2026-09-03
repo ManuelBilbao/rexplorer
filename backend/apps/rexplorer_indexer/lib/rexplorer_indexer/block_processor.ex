@@ -63,12 +63,14 @@ defmodule RexplorerIndexer.BlockProcessor do
           tx_attrs = extract_transaction(raw_tx, receipt, chain_id, adapter)
           tx_hash = tx_attrs.hash
 
-          tx_operations =
-            extract_operations(tx_attrs, adapter)
-            |> Enum.map(&Map.put(&1, :tx_hash, tx_hash))
-
+          # Logs are extracted first: unwrappers whose inner operations are
+          # described by the events the wrapper emitted (ERC-4337) read them.
           tx_logs =
             extract_logs(receipt, chain_id)
+            |> Enum.map(&Map.put(&1, :tx_hash, tx_hash))
+
+          tx_operations =
+            extract_operations(tx_attrs, tx_logs, adapter)
             |> Enum.map(&Map.put(&1, :tx_hash, tx_hash))
 
           tx_token_transfers =
@@ -81,7 +83,8 @@ defmodule RexplorerIndexer.BlockProcessor do
 
     transactions = Enum.reverse(transactions)
 
-    addresses = discover_addresses(transactions, logs, token_transfers, chain_id, block_timestamp)
+    addresses =
+      discover_addresses(transactions, logs, token_transfers, operations, chain_id, block_timestamp)
 
     %{
       block: block_attrs,
@@ -135,13 +138,20 @@ defmodule RexplorerIndexer.BlockProcessor do
     }
   end
 
-  @doc "Extracts operations from a processed transaction via the chain adapter."
-  def extract_operations(tx_attrs, adapter) do
+  @doc """
+  Extracts operations from a processed transaction via the chain adapter.
+
+  The transaction map handed to the adapter carries the transaction's logs, so
+  that an unwrapper can read the events the wrapper contract emitted. Any
+  `op_extra` an unwrapper returns is preserved as-is.
+  """
+  def extract_operations(tx_attrs, tx_logs \\ [], adapter) do
     tx_map = %{
       from_address: tx_attrs.from_address,
       to_address: tx_attrs.to_address,
       value: tx_attrs.value,
-      input: tx_attrs.input
+      input: tx_attrs.input,
+      logs: tx_logs
     }
 
     adapter.extract_operations(tx_map)
@@ -194,13 +204,23 @@ defmodule RexplorerIndexer.BlockProcessor do
     end)
   end
 
-  @doc "Discovers unique addresses from all processed data within a block."
-  def discover_addresses(transactions, logs, token_transfers, chain_id, block_timestamp) do
+  @doc """
+  Discovers unique addresses from all processed data within a block.
+
+  Addresses that played a known on-chain role in the block — an ERC-4337
+  EntryPoint, paymaster, smart account or account factory — carry the label
+  `Rexplorer.Labels` derived for them, and are discovered even when they never
+  appear as a transaction participant or log emitter.
+  """
+  def discover_addresses(transactions, logs, token_transfers, operations, chain_id, block_timestamp) do
+    labels = Rexplorer.Labels.from_operations(operations)
+
     address_set =
       MapSet.new()
       |> collect_tx_addresses(transactions)
       |> collect_log_addresses(logs)
       |> collect_transfer_addresses(token_transfers)
+      |> MapSet.union(MapSet.new(Map.keys(labels)))
       |> MapSet.delete(nil)
 
     Enum.map(address_set, fn hash ->
@@ -210,8 +230,12 @@ defmodule RexplorerIndexer.BlockProcessor do
         is_contract: false,
         first_seen_at: block_timestamp
       }
+      |> put_label(labels[hash])
     end)
   end
+
+  defp put_label(address, nil), do: address
+  defp put_label(address, label), do: Map.put(address, :label, label)
 
   # Private helpers
 
@@ -306,6 +330,7 @@ defmodule RexplorerIndexer.BlockProcessor do
   #     BP->>BP: extract_frame_transaction — from_address=sender, to=nil, payer from receipt
   #     BP->>BP: extract_frames — parse tx.frames + receipt.frameReceipts
   #     loop Each frame
+  #         BP->>BP: extract_logs(frameReceipt) — before operations
   #         alt SENDER frame
   #             BP->>BP: extract_operations(sender, target, data, logs)
   #             BP->>BP: extract_token_transfers(logs)
@@ -410,6 +435,7 @@ defmodule RexplorerIndexer.BlockProcessor do
             to_address: target,
             value: Decimal.new(0),
             input: frame_data,
+            logs: frame_logs,
             chain_id: chain_id
           }
 

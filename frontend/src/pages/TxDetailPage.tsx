@@ -4,6 +4,8 @@ import { useChain } from '../hooks/useChain'
 import { useTxDetail } from '../api/queries'
 import { formatAmount, formatGas } from '../lib/format'
 import { EffectsSection } from '../components/explorer/EffectsSection'
+import { UserOpCard } from '../components/explorer/UserOpCard'
+import { groupUserOps } from '../lib/userOps'
 import { linkifyAddresses } from '../lib/linkify'
 import Skeleton from '../components/ui/Skeleton'
 import Badge from '../components/ui/Badge'
@@ -17,6 +19,8 @@ import { TimeAgo } from '../components/explorer/TimeAgo'
 function actionIcon(summary: string | null): string {
   if (!summary) return '📝'
   const s = summary.toLowerCase()
+  if (s.includes('user operation')) return '👛'
+  if (s.includes('smart account')) return '👛'
   if (s.includes('deposited') && s.includes('from l1')) return '⬇️'
   if (s.includes('swap')) return '🔀'
   if (s.includes('transfer')) return '→'
@@ -50,8 +54,23 @@ export function TxDetailPage() {
 
   const tx = data.transaction
   const isFrameTx = tx.transaction_type === 6 && data.frames && data.frames.length > 0
-  const mainSummary = data.operations.find(op => op.decoded_summary)?.decoded_summary
   const opType = data.operations[0]?.operation_type
+
+  // ERC-4337: the bundler's call is not the story — the UserOperations are
+  const userOps = groupUserOps(data.operations)
+  const isBundle = userOps.length > 0
+  const entryPoint = userOps[0]?.[0]?.op_extra
+  const sponsoredCount = userOps.filter(ops => ops[0]?.op_extra?.paymaster).length
+  const senderCount = new Set(userOps.map(ops => ops[0]?.from_address)).size
+
+  const bundleSummary =
+    userOps.length > 1
+      ? `${userOps.length} user operations from ${senderCount} smart account${senderCount === 1 ? '' : 's'}` +
+        (sponsoredCount > 0 ? `, ${sponsoredCount} sponsored` : '')
+      : null
+
+  const mainSummary =
+    bundleSummary ?? data.operations.find(op => op.decoded_summary)?.decoded_summary
 
   return (
     <div className="space-y-5">
@@ -132,6 +151,19 @@ export function TxDetailPage() {
           {isFrameTx && tx.payer && tx.payer !== tx.from_address && (
             <DetailRow label="Payer" value={tx.payer} mono copyable link={`/${chain}/address/${tx.payer}`} />
           )}
+          {isBundle && entryPoint?.entry_point && (
+            <DetailRow
+              label="Entry Point"
+              value={
+                entryPoint.entry_point_version
+                  ? `${entryPoint.entry_point} (v${entryPoint.entry_point_version})`
+                  : entryPoint.entry_point
+              }
+              mono
+              copyable
+              link={`/${chain}/address/${entryPoint.entry_point}`}
+            />
+          )}
           {!isFrameTx && <DetailRow label="Value" value={formatAmount(tx.value, 18, nativeSymbol(chain))} />}
           <DetailRow label="Gas Used" value={tx.gas_used ? formatGas(tx.gas_used) : '-'} />
           {tx.gas_price && <DetailRow label="Gas Price" value={`${(tx.gas_price / 1e9).toFixed(2)} gwei`} />}
@@ -140,6 +172,22 @@ export function TxDetailPage() {
           {tx.transaction_type != null && <DetailRow label="Tx Type" value={isFrameTx ? 'Frame (0x06)' : String(tx.transaction_type)} />}
         </div>
       </div>
+
+      {/* User Operations (ERC-4337) */}
+      {isBundle && (
+        <div className="bg-rex-bg-secondary border border-rex-border rounded-xl overflow-hidden">
+          <div className="px-5 py-3 border-b border-rex-border">
+            <h2 className="text-sm font-semibold text-rex-text-secondary uppercase tracking-wide">
+              User Operations ({userOps.length})
+            </h2>
+          </div>
+          <div className="divide-y divide-rex-border">
+            {userOps.map((operations, i) => (
+              <UserOpCard key={operations[0]?.op_extra?.user_op_index ?? i} operations={operations} chain={chain!} />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Frames (EIP-8141) */}
       {isFrameTx && data.frames.length > 0 && (

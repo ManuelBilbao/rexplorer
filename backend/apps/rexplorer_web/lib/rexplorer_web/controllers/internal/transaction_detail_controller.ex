@@ -37,6 +37,9 @@ defmodule RexplorerWeb.Internal.TransactionDetailController do
     }
   end
 
+  # `op_extra` carries the ERC-4337 fields (userOpHash, UserOperation index,
+  # entry point, paymaster, factory, outcome). The client groups a bundle's
+  # operations by `user_op_index`, so no second request is needed.
   defp op_json(op) do
     %{
       operation_type: op.operation_type,
@@ -45,7 +48,8 @@ defmodule RexplorerWeb.Internal.TransactionDetailController do
       to_address: op.to_address,
       value: to_string(op.value),
       decoded_summary: op.decoded_summary,
-      frame_index: op.frame_index
+      frame_index: op.frame_index,
+      op_extra: op.op_extra || %{}
     }
   end
 

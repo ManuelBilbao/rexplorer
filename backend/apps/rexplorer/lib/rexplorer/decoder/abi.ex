@@ -4,7 +4,8 @@ defmodule Rexplorer.Decoder.ABI do
 
   Maintains an ETS table (`:rexplorer_abi_registry`) mapping 4-byte function
   selectors to their ABI definitions. Preloaded with common function signatures
-  for ERC-20, Uniswap V2/V3, WETH, and Aave V3.
+  for ERC-20, Uniswap V2/V3, WETH, Aave V3, Safe, Multicall, the ERC-4337
+  EntryPoint and ERC-4337 smart accounts.
 
   Uses `ex_abi` for ABI parsing/decoding and `ex_keccak` for Keccak-256 hashing
   to compute selectors.
@@ -48,7 +49,18 @@ defmodule Rexplorer.Decoder.ABI do
 
     # Multicall
     "multicall(bytes[])",
-    "multicall(uint256,bytes[])"
+    "multicall(uint256,bytes[])",
+
+    # ERC-4337 EntryPoint — v0.6 (unpacked UserOperation[])
+    "handleOps((address,uint256,bytes,bytes,uint256,uint256,uint256,uint256,uint256,bytes,bytes)[],address)",
+
+    # ERC-4337 EntryPoint — v0.7 / v0.8 (PackedUserOperation[])
+    "handleOps((address,uint256,bytes,bytes,bytes32,uint256,bytes32,bytes,bytes)[],address)",
+
+    # ERC-4337 smart accounts
+    "execute(address,uint256,bytes)",
+    "executeBatch(address[],bytes[])",
+    "executeBatch(address[],uint256[],bytes[])"
   ]
 
   # Known event signatures: {signature, param_names, indexed_flags}
@@ -87,8 +99,20 @@ defmodule Rexplorer.Decoder.ABI do
     {"Deposit(address,uint256)", ["dst", "wad"], [true, false]},
     {"Withdrawal(address,uint256)", ["src", "wad"], [true, false]},
     # Ethrex L2 Bridge
-    {"DepositProcessed(address,uint256)", ["recipient", "amount"], [true, false]}
+    {"DepositProcessed(address,uint256)", ["recipient", "amount"], [true, false]},
+    # ERC-4337 EntryPoint
+    {"UserOperationEvent(bytes32,address,address,uint256,bool,uint256,uint256)",
+     ["userOpHash", "sender", "paymaster", "nonce", "success", "actualGasCost", "actualGasUsed"],
+     [true, true, true, false, false, false, false]}
   ]
+
+  # Human-readable parameter names for overloaded functions, where the name
+  # alone cannot say which variant is meant. Checked before `@param_names`.
+  @param_names_by_signature %{
+    "multicall(uint256,bytes[])" => ["deadline", "data"],
+    "executeBatch(address[],bytes[])" => ["dest", "func"],
+    "executeBatch(address[],uint256[],bytes[])" => ["dest", "value", "func"]
+  }
 
   # Human-readable parameter names for signatures whose ABI.FunctionSelector
   # does not include input_names (i.e. they come back as []).
@@ -121,7 +145,10 @@ defmodule Rexplorer.Decoder.ABI do
       "refundReceiver",
       "signatures"
     ],
-    "multicall" => ["data"]
+    "multicall" => ["data"],
+    "handleOps" => ["ops", "beneficiary"],
+    "execute" => ["dest", "value", "func"],
+    "executeBatch" => ["dest", "func"]
   }
 
   # -------------------------------------------------------------------
@@ -230,10 +257,15 @@ defmodule Rexplorer.Decoder.ABI do
     name = fs.function
 
     param_names =
-      if fs.input_names != [] do
-        fs.input_names
-      else
-        Map.get(@param_names, name, [])
+      cond do
+        fs.input_names != [] ->
+          fs.input_names
+
+        Map.has_key?(@param_names_by_signature, sig_string) ->
+          @param_names_by_signature[sig_string]
+
+        true ->
+          Map.get(@param_names, name, [])
       end
 
     entry = %{

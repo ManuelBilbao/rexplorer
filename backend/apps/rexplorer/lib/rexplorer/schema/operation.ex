@@ -15,6 +15,27 @@ defmodule Rexplorer.Schema.Operation do
   "Swapped 10 ETH for 25,000 USDC on Uniswap V3"). It is populated at index
   time by the decoder pipeline and tagged with `decoder_version` to support
   background reprocessing when the decoder improves.
+
+  ## `op_extra`
+
+  Structured facts that belong to the operation but have no column of their
+  own, mirroring `transactions.chain_extra`. Each key has exactly one writer;
+  a key a second consumer needs to filter on earns a column and a migration.
+
+  Written by `Rexplorer.Unwrapper.ERC4337` for `:user_operation` operations:
+
+  | Key | Source |
+  |-----|--------|
+  | `user_op_hash` | `UserOperationEvent` topic1 (absent without logs) |
+  | `user_op_index` | position in the bundle — the grouping key for batched UserOps |
+  | `entry_point` | the transaction's `to_address` |
+  | `entry_point_version` | `"0.6"`, `"0.7"` or `"0.8"` — the EntryPoint address where known, else the calldata shape |
+  | `paymaster` | event topic3, else the `paymasterAndData` prefix (absent when unsponsored) |
+  | `factory` | the `initCode` prefix (absent when the account already exists) |
+  | `success` | event data — the per-UserOp outcome, independent of the transaction's |
+  | `actual_gas_cost` | event data, as a decimal string |
+
+  Keys are omitted rather than set to nil, so `Map.has_key?/2` is meaningful.
   """
 
   use Ecto.Schema
@@ -38,6 +59,7 @@ defmodule Rexplorer.Schema.Operation do
     field :decoded_summary, :string
     field :decoder_version, :integer
     field :frame_index, :integer
+    field :op_extra, :map, default: %{}
 
     timestamps()
   end
@@ -56,7 +78,8 @@ defmodule Rexplorer.Schema.Operation do
       :input,
       :decoded_summary,
       :decoder_version,
-      :frame_index
+      :frame_index,
+      :op_extra
     ])
     |> validate_required([
       :transaction_id,

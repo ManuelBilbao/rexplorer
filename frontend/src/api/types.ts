@@ -33,6 +33,26 @@ export interface Transaction {
   chain_extra: Record<string, unknown>
 }
 
+/**
+ * Structured facts an operation carries that have no column of their own.
+ * Empty for a plain call; ERC-4337 operations carry the fields below, and a
+ * key is absent rather than null when it does not apply.
+ */
+export interface OpExtra {
+  user_op_hash?: string
+  /** Position in the bundle. Operations from one batched UserOperation share it. */
+  user_op_index?: number
+  entry_point?: string
+  entry_point_version?: string
+  /** Absent when the UserOperation was self-funded. */
+  paymaster?: string
+  /** Present when the UserOperation deployed its smart account. */
+  factory?: string
+  /** This UserOperation's own outcome, independent of the transaction's. */
+  success?: boolean
+  actual_gas_cost?: string
+}
+
 export interface Operation {
   operation_type: string
   operation_index: number
@@ -40,6 +60,7 @@ export interface Operation {
   to_address: string | null
   value: string
   decoded_summary: string | null
+  op_extra: OpExtra
 }
 
 export interface TokenTransfer {
@@ -128,8 +149,10 @@ export interface AddressOverview {
 }
 
 export interface SearchResult {
-  type: 'transaction' | 'address' | 'block_number' | 'unknown'
+  type: 'transaction' | 'user_operation' | 'address' | 'block_number' | 'unknown'
   results: Array<Record<string, unknown>>
+  /** Set when the query resolves to a single place to go. */
+  redirect?: string | null
 }
 
 export interface PaginatedResponse<T> {

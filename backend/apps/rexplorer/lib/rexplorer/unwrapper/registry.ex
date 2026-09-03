@@ -4,9 +4,13 @@ defmodule Rexplorer.Unwrapper.Registry do
 
   Iterates registered unwrappers and returns operations from the first match.
   Falls back to a single `:call` operation if no unwrapper matches.
+
+  Detection is by function selector, so at most one unwrapper can match a
+  given transaction and registration order does not change the outcome.
   """
 
   @unwrappers [
+    Rexplorer.Unwrapper.ERC4337,
     Rexplorer.Unwrapper.Safe,
     Rexplorer.Unwrapper.Multicall
   ]

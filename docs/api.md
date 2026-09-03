@@ -154,11 +154,53 @@ List operations (user intents) for a transaction.
       "from_address": "0x...",
       "to_address": "0x...",
       "value": "1000000000000000000",
-      "decoded_summary": "Swapped 1 ETH for 3,247 USDC on Uniswap V3"
+      "decoded_summary": "Swapped 1 ETH for 3,247 USDC on Uniswap V3",
+      "op_extra": {}
     }
   ]
 }
 ```
+
+`op_extra` holds structured facts for operation types that carry them, and is
+empty for a plain call. An `operation_type` of `user_operation` (ERC-4337)
+carries the fields below; each is optional, and a key is **absent** rather than
+null when it does not apply.
+
+| Field | Type | Meaning |
+|-------|------|---------|
+| `user_op_hash` | string | The EntryPoint's userOpHash, from its `UserOperationEvent` |
+| `user_op_index` | integer | Position in the bundle. Operations from one batched UserOperation share it |
+| `entry_point` | string | EntryPoint the bundle was submitted to |
+| `entry_point_version` | string | `"0.6"`, `"0.7"` or `"0.8"` |
+| `paymaster` | string | Sponsor of this UserOperation; absent when self-funded |
+| `factory` | string | Account factory; present when the operation deployed its account |
+| `success` | boolean | This UserOperation's own outcome, independent of the transaction's |
+| `actual_gas_cost` | string | Wei, as a decimal string |
+
+**A bundled UserOperation:**
+```json
+{
+  "operation_type": "user_operation",
+  "operation_index": 1,
+  "from_address": "0xa1a1...",
+  "to_address": "0xa0b8...",
+  "value": "0",
+  "decoded_summary": "Smart account 0xa1a1... transferred 25 USDC to 0x4f2e... (gas paid by paymaster 0x9e9e...)",
+  "op_extra": {
+    "user_op_hash": "0xab...",
+    "user_op_index": 0,
+    "entry_point": "0x0000000071727de22e5e9d8baf0edac6f37da032",
+    "entry_point_version": "0.7",
+    "paymaster": "0x9e9e...",
+    "success": true,
+    "actual_gas_cost": "184320000000000"
+  }
+}
+```
+
+A UserOperation that batched several calls produces one operation per call,
+all sharing the same `user_op_index` and `user_op_hash` — group by
+`user_op_index` to reassemble it.
 
 ---
 

@@ -69,7 +69,9 @@ defmodule Rexplorer.InternalTransactionsTest do
       {:ok, entries, cursor} =
         InternalTransactions.list_by_address(
           @chain_id,
-          "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", limit: 3)
+          "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          limit: 3
+        )
 
       assert length(entries) == 3
       assert is_integer(cursor)
@@ -79,7 +81,9 @@ defmodule Rexplorer.InternalTransactionsTest do
       {:ok, entries, _} =
         InternalTransactions.list_by_address(
           @chain_id,
-          "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", before: 105)
+          "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          before: 105
+        )
 
       block_numbers = Enum.map(entries, & &1.block_number)
       assert Enum.all?(block_numbers, &(&1 < 105))

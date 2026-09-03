@@ -11,6 +11,12 @@ defmodule Rexplorer.Unwrapper do
 
   The transaction map contains at minimum: `:to_address`, `:from_address`,
   `:value`, `:input` (raw calldata binary).
+
+  It may also carry `:logs` — the transaction's log attribute maps, with
+  `:topic0`..`:topic3` as hex strings and `:data` as a binary — for wrapper
+  patterns whose inner operations are only fully described by the events the
+  wrapper emitted. An unwrapper MUST work without that key: when it is absent,
+  produce whatever calldata alone allows rather than declining to match.
   """
   @callback matches?(transaction :: map(), chain_id :: integer()) :: boolean()
 

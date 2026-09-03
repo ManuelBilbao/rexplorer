@@ -187,6 +187,39 @@ defmodule RexplorerWeb.Schemas do
           type: :string,
           nullable: true,
           description: "Human-readable description of what this operation did"
+        },
+        op_extra: %Schema{
+          type: :object,
+          description:
+            "Structured facts for operation types that carry them. Empty for a plain call. " <>
+              "ERC-4337 operations carry the fields below; each is optional, and a key is " <>
+              "absent rather than null when it does not apply.",
+          properties: %{
+            user_op_hash: %Schema{
+              type: :string,
+              description: "The EntryPoint's userOpHash, from its UserOperationEvent"
+            },
+            user_op_index: %Schema{
+              type: :integer,
+              description:
+                "Position in the bundle. Operations from one batched UserOperation share it"
+            },
+            entry_point: %Schema{type: :string, description: "EntryPoint the bundle was sent to"},
+            entry_point_version: %Schema{type: :string, enum: ["0.6", "0.7", "0.8"]},
+            paymaster: %Schema{
+              type: :string,
+              description: "Sponsor of this UserOperation; absent when self-funded"
+            },
+            factory: %Schema{
+              type: :string,
+              description: "Account factory; present when the operation deployed its account"
+            },
+            success: %Schema{
+              type: :boolean,
+              description: "This UserOperation's own outcome, independent of the transaction's"
+            },
+            actual_gas_cost: %Schema{type: :string, description: "Wei, as a decimal string"}
+          }
         }
       }
     })

@@ -102,6 +102,8 @@ erDiagram
         binary input
         text decoded_summary
         integer decoder_version
+        integer frame_index
+        jsonb op_extra
     }
 
     addresses {
@@ -168,7 +170,8 @@ erDiagram
 
 - **Multi-chain from the schema level:** Every table has a `chain_id` column. The same 20-byte address on different chains produces separate records.
 - **JSONB extension columns:** `chain_extra` on blocks and transactions stores chain-specific fields without per-chain tables or migrations.
-- **Operations as the core abstraction:** A transaction may contain multiple operations (user intents). This enables proper AA, multisig, and multicall support.
+- **Operations as the core abstraction:** A transaction may contain multiple operations (user intents). This enables proper AA, multisig, and multicall support. Facts that belong to an operation but have no column of their own live in `op_extra` (JSONB) — the ERC-4337 fields today, mirroring how `transactions.chain_extra` holds chain-specific data.
+- **Address labels are derived, not curated:** `addresses.label` records a role observed while indexing (`Smart Account`, `ERC-4337 Paymaster`, `ERC-4337 EntryPoint v0.7`, `ERC-4337 Account Factory`). The first observed role wins and is never overwritten, so re-indexing is idempotent.
 - **Cross-chain links:** Connects related transactions across chains (bridge deposits/withdrawals) for journey tracking.
 - **Decoded summary versioning:** Operations store a `decoder_version` alongside the human-readable summary, enabling background reprocessing when the decoder improves.
 
@@ -181,7 +184,7 @@ See [Chain Adapters](chain-adapters.md) for the full adapter documentation.
 ## Decoder Pipeline
 
 The decoder pipeline runs as an async background worker with two parallel paths:
-- **Operation decoding**: calldata → ABI decode → unwrap (Safe/Multicall) → interpret → narrate → `decoded_summary`
+- **Operation decoding**: calldata → ABI decode → unwrap (ERC-4337/Safe/Multicall) → interpret → narrate → `decoded_summary`
 - **Event decoding**: logs → topic0 lookup → decode params → format summary → `logs.decoded` JSONB
 
 See [Decoder Pipeline](decoder-pipeline.md) and [Effects Composition](workflows/effects-composition.md).

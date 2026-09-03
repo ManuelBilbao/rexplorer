@@ -10,7 +10,7 @@ The decoder pipeline transforms raw EVM data into human-readable stories. It has
 graph TD
     subgraph "Operation Decoding (calldata → intent)"
         Op["Operation (raw calldata)"]
-        Unwrap["Unwrap Layer<br/>Safe, Multicall detection"]
+        Unwrap["Unwrap Layer<br/>ERC-4337, Safe, Multicall detection"]
         ABI["ABI Registry<br/>selector → function + params"]
         Interp["Interpreter Registry<br/>decoded call → semantic action"]
         Narr["Narrator<br/>action → human-readable string"]
@@ -25,7 +25,7 @@ graph TD
     end
 
     Op --> Unwrap
-    Unwrap -->|"Safe/Multicall"| ABI
+    Unwrap -->|"ERC-4337/Safe/Multicall"| ABI
     Unwrap -->|"plain call"| ABI
     ABI -->|"known"| Interp
     ABI -->|"unknown"| Fallback["Fallback narration"]
@@ -48,12 +48,20 @@ Before ABI decoding, the pipeline checks if the operation wraps inner calls:
 
 | Wrapper | Selector | Result |
 |---------|----------|--------|
+| EntryPoint `handleOps` (v0.6) | `0x1fad948c` | One or more operations per UserOperation, from=smart account |
+| EntryPoint `handleOps` (v0.7/v0.8) | `0x765e827f` | Same, packed calldata shape |
 | Safe `execTransaction` | `0x6a761202` | Extracts inner call, sets from=Safe address |
 | `multicall(bytes[])` | `0xac9650d8` | Splits into N inner calls |
 | `multicall(uint256,bytes[])` | `0x5ae401dc` | Splits into N inner calls (Uniswap V3) |
 | Plain call | any other | Passed through unchanged |
 
 After unwrapping, the inner calldata is decoded by the ABI registry and interpreted. The narrator prefixes the summary with context: "Safe 0x7a25...: transferred 1,000 USDC to 0x3075..."
+
+For an ERC-4337 operation the context comes from `op_extra`, which the
+unwrapper filled in at index time: the actor is the smart account, a sponsored
+operation names its paymaster, and a UserOperation that reverted inside a
+successful transaction is marked failed — "Failed: Smart account 0xa1a1...
+transferred 25 USDC to 0x4f2e... (gas paid by paymaster 0x9e9e...)".
 
 See [Unwrap Layer](unwrap-layer.md) for details.
 

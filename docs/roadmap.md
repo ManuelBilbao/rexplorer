@@ -3,14 +3,15 @@
 What is planned, in priority order. This is the file to check for what to do
 next.
 
-Status is `next` (agreed as the next piece of work), `planned` (agreed, not
-started) or `idea` (not decided yet). When work on an item starts it becomes an
+Status is `in progress` (a change is being implemented), `next` (agreed as the
+next piece of work), `planned` (agreed, not started) or `idea` (not decided
+yet). When work on an item starts it becomes an
 OpenSpec change — write the change name in the last column so the item can be
 traced to its proposal, design, specs and tasks.
 
 | # | Item | What it needs | Status | Change |
 |---|------|---------------|--------|--------|
-| 1 | ERC-4337 UserOps | An unwrapper for `handleOps` that emits one operation per UserOp; paymaster and smart-wallet labels. `Schema.Operation` already has the `user_operation` type. | next | — |
+| 1 | ERC-4337 UserOps | An unwrapper for `handleOps` that emits one operation per UserOp; paymaster and smart-wallet labels. `Schema.Operation` already has the `user_operation` type. | in progress | [`erc-4337-user-operations`](../openspec/changes/erc-4337-user-operations/) |
 | 2 | Historical backfill | The indexer only follows the chain head, so there is no past data. Needs a backward worker and per-chain progress tracking. | planned | — |
 | 3 | Reorg recovery | The worker detects a reorg and halts. Needs to roll back the affected blocks and resume. | planned | — |
 | 4 | Cross-chain journeys | Nothing writes `CrossChainLink` today. Needs a producer that matches deposit and withdrawal events across chains. | planned | — |

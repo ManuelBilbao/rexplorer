@@ -39,11 +39,13 @@ sequenceDiagram
         RPC-->>Worker: {:ok, receipts}
 
         Worker->>Proc: process_block(raw_block, receipts, adapter)
-        Proc->>Adapter: extract_operations(tx) per transaction
-        Adapter-->>Proc: operations list
+        Proc->>Proc: extract_logs(receipt) per transaction
+        Note over Proc: logs first — unwrappers read the<br/>events the wrapper emitted
+        Proc->>Adapter: extract_operations(tx + logs) per transaction
+        Adapter-->>Proc: operations list (with op_extra)
         Proc->>Adapter: extract_token_transfers(tx) per transaction
         Adapter-->>Proc: token transfers list
-        Proc->>Proc: extract logs, discover addresses
+        Proc->>Proc: discover addresses, derive role labels
         Proc-->>Worker: %{block, transactions, operations, logs, transfers, addresses}
 
         Worker->>Repo: Repo.transaction (atomic insert)
@@ -52,7 +54,7 @@ sequenceDiagram
         Repo->>DB: INSERT operations
         Repo->>DB: INSERT logs
         Repo->>DB: INSERT token_transfers
-        Repo->>DB: INSERT addresses (on_conflict: nothing)
+        Repo->>DB: INSERT addresses (on_conflict: nothing;<br/>labelled rows fill label where NULL)
         DB-->>Repo: COMMIT
         Repo-->>Worker: {:ok, _}
 

@@ -2,6 +2,11 @@ defmodule Rexplorer.Decoder.Pipeline do
   @moduledoc """
   Orchestrates the decoder pipeline: ABI decode → interpret → narrate.
 
+  Operations are narrated from the point of view of their logical actor: a
+  Safe execution names the Safe, and an ERC-4337 `user_operation` names the
+  smart account, its sponsor and whether that UserOperation itself failed —
+  read from `op_extra`, which the ERC-4337 unwrapper populated at index time.
+
   This module contains pure logic (no side effects except token cache lookup).
   The `decode_operation/2` function is the main entry point, used by the
   decoder worker to process individual operations.
@@ -10,7 +15,7 @@ defmodule Rexplorer.Decoder.Pipeline do
   alias Rexplorer.Decoder.{ABI, Narrator}
   alias Rexplorer.Decoder.Interpreter.Registry, as: InterpreterRegistry
 
-  @decoder_version 2
+  @decoder_version 3
 
   @doc "Returns the current decoder version."
   def decoder_version, do: @decoder_version
@@ -43,7 +48,7 @@ defmodule Rexplorer.Decoder.Pipeline do
 
       case inner_summary do
         {:ok, summary} ->
-          {:ok, wrap_with_context(summary, operation_type, operation.from_address)}
+          {:ok, wrap_with_context(summary, operation_type, operation)}
 
         {:error, reason} ->
           {:error, reason}
@@ -88,21 +93,56 @@ defmodule Rexplorer.Decoder.Pipeline do
     end
   end
 
-  defp wrap_with_context(summary, :multisig_execution, from_address) do
+  defp wrap_with_context(summary, :multisig_execution, %{from_address: from_address}) do
     "Safe #{from_address}: #{summary}"
   end
 
-  defp wrap_with_context(summary, :delegate_call, from_address) do
+  defp wrap_with_context(summary, :delegate_call, %{from_address: from_address}) do
     "Safe #{from_address} (delegatecall): #{summary}"
   end
 
-  defp wrap_with_context(summary, :multicall_item, _from_address) do
+  defp wrap_with_context(summary, :multicall_item, _operation) do
     summary
   end
 
-  defp wrap_with_context(summary, _type, _from_address) do
+  # ERC-4337: the actor is the smart account, not the bundler that submitted
+  # the bundle, and the sponsorship is the fact a user most wants to see.
+  defp wrap_with_context(summary, :user_operation, operation) do
+    extra = Map.get(operation, :op_extra) || %{}
+    from_address = operation.from_address
+
+    body =
+      if is_binary(from_address) and String.starts_with?(summary, from_address) do
+        "Smart account " <> summary
+      else
+        "Smart account #{from_address}: #{summary}"
+      end
+
+    body
+    |> append_clauses(extra)
+    |> mark_failure(extra)
+  end
+
+  defp wrap_with_context(summary, _type, _operation) do
     summary
   end
+
+  defp append_clauses(body, extra) do
+    clauses =
+      [
+        extra["factory"] && "account deployed by #{extra["factory"]}",
+        extra["paymaster"] && "gas paid by paymaster #{extra["paymaster"]}"
+      ]
+      |> Enum.reject(&is_nil/1)
+
+    case clauses do
+      [] -> body
+      clauses -> "#{body} (#{Enum.join(clauses, ", ")})"
+    end
+  end
+
+  defp mark_failure(body, %{"success" => false}), do: "Failed: " <> body
+  defp mark_failure(body, _extra), do: body
 
   defp get_operation_type(%{operation_type: type}) when is_atom(type), do: type
 

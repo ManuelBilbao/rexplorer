@@ -117,6 +117,8 @@ rexplorer/
 | Workflow | Description |
 |----------|-------------|
 | [`docs/workflows/block-indexing.md`](docs/workflows/block-indexing.md) | How blocks flow from RPC node to database |
+| [`docs/workflows/user-operation-indexing.md`](docs/workflows/user-operation-indexing.md) | How an ERC-4337 bundle becomes one operation per user intent |
+| [`docs/workflows/userop-hash-lookup.md`](docs/workflows/userop-hash-lookup.md) | How a userOpHash search resolves to its transaction |
 | [`docs/workflows/indexer-startup.md`](docs/workflows/indexer-startup.md) | Application boot, chain discovery, worker startup |
 | [`docs/workflows/transaction-lookup.md`](docs/workflows/transaction-lookup.md) | How a tx hash query resolves to a full response |
 | [`docs/workflows/address-view.md`](docs/workflows/address-view.md) | How the address page assembles its data |

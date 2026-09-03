@@ -247,39 +247,22 @@ defmodule RexplorerIndexer.Worker do
         |> Repo.insert!()
       end)
 
-      # Upsert addresses (on_conflict: :nothing — first insert wins)
-      if result.addresses != [] do
-        now = NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second)
-
-        address_entries =
-          Enum.map(result.addresses, fn addr ->
-            addr
-            |> Map.put(:inserted_at, now)
-            |> Map.put(:updated_at, now)
-          end)
-
-        Repo.insert_all(Address, address_entries, on_conflict: :nothing)
-      end
+      # Upsert addresses — first insert wins, except that a row still missing a
+      # label picks up the role label discovered for it in this block.
+      Rexplorer.Addresses.upsert_discovered(result.addresses)
 
       # Ensure addresses from balance tracking exist in the addresses table
       # (traces may discover addresses not in top-level tx from/to)
-      if address_updates != [] do
-        now = NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second)
-
-        trace_address_entries =
-          Enum.map(address_updates, fn {address_hash, _balance_wei} ->
-            %{
-              chain_id: result.block.chain_id,
-              hash: address_hash,
-              is_contract: false,
-              first_seen_at: result.block.timestamp,
-              inserted_at: now,
-              updated_at: now
-            }
-          end)
-
-        Repo.insert_all(Address, trace_address_entries, on_conflict: :nothing)
-      end
+      address_updates
+      |> Enum.map(fn {address_hash, _balance_wei} ->
+        %{
+          chain_id: result.block.chain_id,
+          hash: address_hash,
+          is_contract: false,
+          first_seen_at: result.block.timestamp
+        }
+      end)
+      |> Rexplorer.Addresses.upsert_discovered()
 
       # Insert balance changes
       if balance_changes != [] do

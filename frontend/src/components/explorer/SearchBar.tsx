@@ -11,6 +11,14 @@ export function SearchBar() {
     e.preventDefault()
     if (!data || data.type === 'unknown') return
 
+    // The BFF resolves a hash that is not a transaction to the place it lives
+    // (a userOpHash to its parent transaction) and says where to go.
+    if (data.redirect) {
+      navigate(data.redirect)
+      setQuery('')
+      return
+    }
+
     const result = data.results[0]
     if (!result) return
 
@@ -24,6 +32,9 @@ export function SearchBar() {
       case 'block_number':
         navigate(`/${result.chain}/block/${result.block_number}`)
         break
+      case 'user_operation':
+        navigate(`/${result.chain}/tx/${result.transaction_hash}`)
+        break
     }
 
     setQuery('')
@@ -36,7 +47,7 @@ export function SearchBar() {
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search by address, tx hash, or block number..."
+          placeholder="Search by address, tx hash, UserOp hash, or block number..."
           className="w-full rounded-lg border border-rex-border bg-rex-bg-tertiary px-4 py-2 pr-10 text-sm text-rex-text placeholder-rex-text-secondary focus:border-rex-primary focus:outline-none focus:ring-1 focus:ring-rex-primary"
         />
         <button

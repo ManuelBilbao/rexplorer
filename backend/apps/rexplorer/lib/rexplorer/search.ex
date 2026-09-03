@@ -2,8 +2,12 @@ defmodule Rexplorer.Search do
   @moduledoc """
   Classifies search input and returns matching results.
 
-  Supports searching by transaction hash, block number, and address.
-  Can be scoped to a specific chain or search across all chains.
+  Supports searching by transaction hash, userOpHash, block number, and
+  address. Can be scoped to a specific chain or search across all chains.
+
+  A 66-character hex string is looked up as a transaction hash first — the
+  common case, which must not pay for the fallback — and only when that misses
+  is it retried as an ERC-4337 userOpHash.
   """
 
   import Ecto.Query
@@ -15,7 +19,9 @@ defmodule Rexplorer.Search do
   Options:
   - `:chain_id` — scope search to a specific chain (optional)
 
-  Returns `{:ok, %{type: atom, results: list}}`.
+  Returns `{:ok, %{type: atom, results: list}}`. The type is one of
+  `:transaction`, `:user_operation`, `:address`, `:block_number` or
+  `:unknown`.
   """
   def query(input, opts \\ []) do
     input = String.trim(input)
@@ -45,8 +51,32 @@ defmodule Rexplorer.Search do
 
     query = if chain_id, do: where(query, [t], t.chain_id == ^chain_id), else: query
 
+    case Repo.all(query) do
+      [] -> search_user_operation(hash, chain_id)
+      results -> {:ok, %{type: :transaction, results: results}}
+    end
+  end
+
+  # A hash that is not a transaction may be an ERC-4337 userOpHash. The
+  # existence predicate is what lets Postgres use the partial index on
+  # `op_extra->>'user_op_hash'`; without it the planner falls back to a scan.
+  defp search_user_operation(hash, chain_id) do
+    hash = String.downcase(hash)
+
+    query =
+      from o in Schema.Operation,
+        join: t in assoc(o, :transaction),
+        join: b in assoc(t, :block),
+        where: fragment("? \\? ?", o.op_extra, "user_op_hash"),
+        where: fragment("?->>'user_op_hash' = ?", o.op_extra, ^hash),
+        order_by: [asc: o.operation_index],
+        preload: [transaction: {t, block: b}],
+        select: o
+
+    query = if chain_id, do: where(query, [o], o.chain_id == ^chain_id), else: query
+
     results = Repo.all(query)
-    {:ok, %{type: :transaction, results: results}}
+    {:ok, %{type: :user_operation, results: results}}
   end
 
   defp search_address(hash, chain_id) do

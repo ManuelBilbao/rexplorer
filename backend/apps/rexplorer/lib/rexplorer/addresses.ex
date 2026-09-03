@@ -3,11 +3,54 @@ defmodule Rexplorer.Addresses do
   Query module for address records.
 
   Provides functions to retrieve address metadata and aggregated overviews
-  with recent transactions and token transfers.
+  with recent transactions and token transfers, and the upsert the indexer
+  uses to record addresses discovered in a block.
   """
 
   import Ecto.Query
   alias Rexplorer.{Repo, Schema.Address, Schema.Transaction, Schema.TokenTransfer, Schema.Frame}
+
+  @doc """
+  Upserts addresses discovered while indexing a block.
+
+  Unlabelled rows keep the original `ON CONFLICT DO NOTHING` — the hot path,
+  run for every address in every block. Rows carrying a role label
+  (`Rexplorer.Labels`) instead fill in `label` where it is still NULL, so the
+  first observed role wins and re-indexing a block is idempotent.
+
+  Entries are attribute maps with at least `:chain_id`, `:hash` and
+  `:first_seen_at`; timestamps are filled in here.
+  """
+  def upsert_discovered([]), do: :ok
+
+  def upsert_discovered(entries) when is_list(entries) do
+    now = NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second)
+
+    entries =
+      Enum.map(entries, fn entry ->
+        entry
+        |> Map.put(:inserted_at, now)
+        |> Map.put(:updated_at, now)
+      end)
+
+    {labelled, unlabelled} = Enum.split_with(entries, &is_binary(Map.get(&1, :label)))
+
+    if unlabelled != [] do
+      Repo.insert_all(Address, unlabelled, on_conflict: :nothing)
+    end
+
+    if labelled != [] do
+      Repo.insert_all(Address, labelled,
+        on_conflict:
+          from(a in Address,
+            update: [set: [label: fragment("COALESCE(?, EXCLUDED.label)", a.label)]]
+          ),
+        conflict_target: [:chain_id, :hash]
+      )
+    end
+
+    :ok
+  end
 
   @doc "Returns an address by chain_id and hash."
   def get_address(chain_id, hash) do

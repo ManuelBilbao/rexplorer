@@ -47,6 +47,9 @@ defmodule RexplorerWeb.API.V1.OperationController do
     end
   end
 
+  # ERC-4337 operations carry their UserOperation's hash, index, entry point,
+  # paymaster, factory and outcome, so an integrator can reconstruct a bundle
+  # without parsing calldata. Empty for every other operation type.
   defp operation_json(op) do
     %{
       operation_type: op.operation_type,
@@ -54,7 +57,8 @@ defmodule RexplorerWeb.API.V1.OperationController do
       from_address: op.from_address,
       to_address: op.to_address,
       value: to_string(op.value),
-      decoded_summary: op.decoded_summary
+      decoded_summary: op.decoded_summary,
+      op_extra: op.op_extra || %{}
     }
   end
 end
