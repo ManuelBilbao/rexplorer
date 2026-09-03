@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+Tracks the L2 batches that blocks are sequenced into, and the lifecycle status of each.
+
+## Requirements
 
 ### Requirement: Batches table
 The system SHALL maintain a `batches` table with: `id` (bigint PK), `chain_id` (FK to chains), `batch_number` (integer), `first_block` (bigint), `last_block` (bigint), `status` (enum: `sealed`, `committed`, `verified`), `commit_tx_hash` (string, nullable), `verify_tx_hash` (string, nullable). A unique index on `(chain_id, batch_number)` SHALL prevent duplicates.

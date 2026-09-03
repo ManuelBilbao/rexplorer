@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+Unwraps a Safe `execTransaction` into the inner call the multisig actually executed.
+
+## Requirements
 
 ### Requirement: Safe execTransaction detection
 The Safe unwrapper SHALL detect transactions whose input calldata starts with the `execTransaction` selector (`0x6a761202`). Detection MUST be selector-based (not address-based) since Safe proxies are deployed at arbitrary addresses.

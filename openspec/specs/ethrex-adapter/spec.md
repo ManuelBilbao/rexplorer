@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+Support for Ethrex-based L2s, including their batch RPC extensions and config-driven chain registration.
+
+## Requirements
 
 ### Requirement: Ethrex stack module
 The system SHALL provide `Rexplorer.Chain.Ethrex` as a module that defines Ethrex-specific adapter behavior. It SHALL use the EVM base module for shared logic and add:

@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+The generic UI primitives — buttons, tables, badges, tabs, modals — that every page is built from.
+
+## Requirements
 
 ### Requirement: Button component
 The system SHALL provide a `Button` component with variants: `primary`, `secondary`, `ghost`, `danger`. It MUST support `size` prop (`sm`, `md`, `lg`), `disabled` state, and `loading` state (with spinner). All variants MUST work in both light and dark modes. The `secondary` variant MUST support the "Load more" pattern used across pagination footers (border style, full-width option).

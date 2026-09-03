@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+The server side of live updates: the channels clients subscribe to, and how they are authorised.
+
+## Requirements
 
 ### Requirement: New blocks channel
 The system SHALL provide a Phoenix Channel topic `blocks:<chain_slug>` that broadcasts new block events whenever a block is indexed. Each broadcast MUST include block number, hash, timestamp, transaction_count, and gas_used.

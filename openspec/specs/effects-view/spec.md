@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+The Effects section: what a transaction actually moved, assembled from token transfers and decoded logs.
+
+## Requirements
 
 ### Requirement: Effects section on transaction detail page
 The transaction detail page SHALL include an "Effects" section that displays a human-readable timeline of what happened as a result of the transaction. Effects MUST be composed from token transfers and decoded event logs.

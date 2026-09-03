@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+The behaviour and registry that route a transaction to the unwrapper for its wrapper pattern.
+
+## Requirements
 
 ### Requirement: Unwrapper behaviour
 The system SHALL define a `Rexplorer.Unwrapper` behaviour with callbacks:

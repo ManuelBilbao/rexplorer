@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+The address page: what an address holds, how its balance moved, and everything it has been party to.
+
+## Requirements
 
 ### Requirement: Address stat cards
 The address page SHALL display three stat cards at the top: Balance (formatted native token amount with symbol), Last Active (relative time from most recent transaction), and First Seen (relative time from `first_seen_at`).

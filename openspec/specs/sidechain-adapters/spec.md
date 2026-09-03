@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+Chain adapters for the EVM sidechains — BNB Smart Chain and Polygon.
+
+## Requirements
 
 ### Requirement: BNB Smart Chain adapter
 The system SHALL provide `Rexplorer.Chain.BNB` (chain_id: 56, chain_type: `:sidechain`, native_token: `{"BNB", 18}`, poll_interval: 3000ms). It SHALL use the EVM base module. No chain-specific block or transaction fields.

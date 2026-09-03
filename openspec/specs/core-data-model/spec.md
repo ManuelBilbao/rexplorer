@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+The database schema: blocks, transactions, operations, addresses, tokens, logs, and the links between them.
+
+## Requirements
 
 ### Requirement: Multi-chain block storage
 The system SHALL store blocks from multiple chains in a single `blocks` table. Each block MUST be uniquely identified by `(chain_id, block_number)`. Blocks MUST store: hash, parent_hash, timestamp, gas_used, gas_limit, base_fee_per_gas, and a `chain_extra` JSONB column for chain-specific fields (e.g., L2 batch index, blob gas used).

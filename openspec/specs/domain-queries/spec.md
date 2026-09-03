@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+The query modules the API layers call — blocks, transactions, addresses, balances, chains and search.
+
+## Requirements
 
 ### Requirement: Block query module
 The system SHALL provide `Rexplorer.Blocks` with functions: `get_block(chain_id, block_number)`, `list_blocks(chain_id, opts)` (with cursor pagination). Both MUST preload transaction counts.

@@ -1,4 +1,8 @@
-## MODIFIED Requirements
+## Purpose
+
+Resolves a chain id to the adapter module that knows how to read that chain.
+
+## Requirements
 
 ### Requirement: Chain adapter registry
 The system SHALL maintain a registry of available chain adapters, accessible via `Rexplorer.Chain.Registry`. The registry SHALL provide:

@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+The blockchain-specific display components — addresses, hashes, token amounts, block numbers, statuses.
+
+## Requirements
 
 ### Requirement: AddressDisplay component
 The system SHALL provide an `AddressDisplay` component that renders a blockchain address with: truncation (showing first 6 and last 4 characters by default), a copy-to-clipboard button, an optional label (ENS name or known protocol name), and a link to the address page. If a label is present, it MUST be shown instead of the truncated hash, with the full hash available on hover.

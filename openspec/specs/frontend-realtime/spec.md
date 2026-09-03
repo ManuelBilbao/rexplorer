@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+Live updates in the browser over Phoenix Channels — new blocks and address activity.
+
+## Requirements
 
 ### Requirement: Phoenix Socket connection
 The system SHALL establish a WebSocket connection to the Phoenix socket at `/socket` on application mount. The connection MUST reconnect automatically on disconnect.

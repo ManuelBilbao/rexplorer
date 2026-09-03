@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+Value-moving calls inside a transaction, flattened from traces so they surface on the address page.
+
+## Requirements
 
 ### Requirement: Internal transactions table
 The system SHALL maintain an `internal_transactions` table storing value-transferring trace entries from block execution. Each entry MUST be uniquely identified by `(chain_id, block_number, transaction_index, trace_index)` and MUST store: `from_address`, `to_address` (nullable for selfdestructs without recipient), `value` (numeric), `call_type` (enum: `call`, `create`, `create2`, `selfdestruct`), `trace_address` (integer array representing the path in the call tree), `transaction_hash`, `input_prefix` (first 4 bytes of calldata, nullable), and `error` (nullable).

@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+The JSON-RPC client the indexer fetches blocks, receipts and traces with.
+
+## Requirements
 
 ### Requirement: JSON-RPC client for Ethereum-compatible nodes
 The system SHALL provide a stateless module `Rexplorer.RPC.Client` that communicates with Ethereum-compatible JSON-RPC endpoints over HTTP. The client MUST support batch and individual JSON-RPC calls and handle standard error responses.

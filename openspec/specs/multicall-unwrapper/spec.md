@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+Splits a multicall into one operation per inner call.
+
+## Requirements
 
 ### Requirement: Multicall detection
 The Multicall unwrapper SHALL detect transactions whose input starts with known multicall selectors:

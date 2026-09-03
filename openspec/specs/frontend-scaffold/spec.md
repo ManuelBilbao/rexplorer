@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+The frontend's foundations: build setup, routing, layout and API client configuration.
+
+## Requirements
 
 ### Requirement: Project setup
 The system SHALL have a `frontend/` directory at the repository root containing a Vite + React + TypeScript project. It MUST include Tailwind CSS configured with dark mode (`class` strategy). The project MUST be buildable with `pnpm run build` and runnable in development with `pnpm run dev`.

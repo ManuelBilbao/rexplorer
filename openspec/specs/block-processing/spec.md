@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+Pure transformation of raw RPC blocks and receipts into the attribute maps the indexer persists.
+
+## Requirements
 
 ### Requirement: Raw block transformation
 The system SHALL provide `RexplorerIndexer.BlockProcessor.process_block/3` that takes a raw RPC block map, a list of receipt maps, and a chain adapter module, and returns a structured result containing all Ecto-ready data for the block. This function MUST be pure (no side effects, no database calls).

@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+Records how each address's native balance changes block by block, so a balance can be shown and charted over time.
+
+## Requirements
 
 ### Requirement: Balance changes table
 The system SHALL maintain a `balance_changes` table that records the absolute native-token balance of an address at every block where that balance changed. Each row MUST be uniquely identified by `(chain_id, address_hash, block_number)` and MUST store: `balance_wei` (numeric), `timestamp` (from the block), and `source` (enum: `seed`, `indexed`).

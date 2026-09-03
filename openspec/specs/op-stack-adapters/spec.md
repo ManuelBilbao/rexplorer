@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+Chain adapters for the OP Stack rollups, sharing one base module.
+
+## Requirements
 
 ### Requirement: OP Stack shared module
 The system SHALL provide `Rexplorer.Chain.OPStack` as a `__using__` macro module that layers OP Stack-specific behavior on top of the EVM base. It SHALL override:

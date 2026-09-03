@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+How the umbrella application is laid out, configured and documented.
+
+## Requirements
 
 ### Requirement: Phoenix umbrella application structure
 The system SHALL be organized as a Phoenix umbrella application with three child apps:

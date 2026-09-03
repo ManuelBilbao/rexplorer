@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+The pages of the explorer, and the shared components each one is required to render with.
+
+## Requirements
 
 ### Requirement: Home page
 The home page MUST use `Skeleton` for loading states, `BlockNumber` for block links, and `TimeAgo` for timestamps. The status dot indicator pattern (colored dots for tx status in compact lists) MAY remain as-is since it serves a different visual purpose than StatusBadge.
@@ -76,8 +80,6 @@ The system SHALL display a "not found" page when navigating to an unknown route 
 #### Scenario: Unknown route
 - **WHEN** the user navigates to `/ethereum/unknown-page`
 - **THEN** a "Page not found" message is displayed
-
-## REMOVED Requirements
 
 <!-- Removed by change: adopt-ui-components -->
 <!-- Requirement: Design preview page — The DesignPreview page (`/design` route) was a scaffolding artifact used for palette exploration during initial development. Its purpose is complete — the color system is established via Tailwind design tokens. The page uses zero shared components, zero Tailwind classes, and 100% inline styles with hardcoded mock data. Migration: No migration needed. Palette history is preserved in git. Remove `DesignPreview.tsx` and its route from `App.tsx`. -->

@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+Decodes event logs into named parameters and a readable summary, using the event signature registry.
+
+## Requirements
 
 ### Requirement: Event signature registry
 The ABI registry SHALL be extended to include known event signatures, keyed by topic0 (the Keccak-256 hash of the event signature). The registry MUST support lookup by topic0 and return the event name, parameter names, parameter types, and which parameters are indexed.

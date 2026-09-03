@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+Turns raw EVM calldata and event logs into named functions and typed parameters, from a registry of known selectors and event signatures.
+
+## Requirements
 
 ### Requirement: Function selector lookup
 The system SHALL provide `Rexplorer.Decoder.ABI.lookup_selector/1` that takes a 4-byte function selector and returns the matching ABI function definition (name, inputs, outputs) from the built-in registry. If no match is found, it SHALL return `nil`.

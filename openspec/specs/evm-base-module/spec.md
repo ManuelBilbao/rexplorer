@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+The shared behaviour every EVM chain adapter inherits, so a new chain only declares what makes it different.
+
+## Requirements
 
 ### Requirement: Shared EVM base module
 The system SHALL provide `Rexplorer.Chain.EVM` as a `__using__` macro module that injects default implementations for all `Rexplorer.Chain.Adapter` callbacks that are common across EVM chains. Specifically:

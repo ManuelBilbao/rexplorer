@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+What the indexer does per block beyond the basics — batches, balances, traces, internal transactions and frames.
+
+## Requirements
 
 ### Requirement: Batch info fetching for Ethrex chains
 After persisting a block on an Ethrex chain, the indexer worker SHALL call `ethrex_getBatchByBlock` to determine which batch the block belongs to. If batch info is returned:
@@ -14,7 +18,19 @@ After persisting a block on an Ethrex chain, the indexer worker SHALL call `ethr
 - **THEN** `chain_extra.batch_number` is null and no batch record is created
 
 ### Requirement: Batch status updater
-The worker SHALL periodically check for batch status transitions on Ethrex chains. For batches in `sealed` or `committed` status, it SHALL call `ethrex_getBatchByNumber` to check if the batch has been committed or verified, and update the status and L1 tx hashes accordingly.
+The worker SHALL periodically check for batch status transitions on Ethrex chains. For batches in `sealed` or `committed` status, it SHALL call `ethrex_getBatchByNumber` to check if the batch has been committed or verified, and update the status and L1 tx hashes accordingly. Status SHALL only ever advance: `sealed` → `committed` → `verified`.
+
+#### Scenario: Batch gains a commit transaction
+- **WHEN** a batch recorded as `sealed` comes back from the node carrying a commit tx hash
+- **THEN** its status becomes `committed` and the commit tx hash is stored
+
+#### Scenario: Batch is verified
+- **WHEN** a batch comes back carrying a verify tx hash
+- **THEN** its status becomes `verified` and the verify tx hash is stored
+
+#### Scenario: Status never regresses
+- **WHEN** an update reports a status lower than the one already recorded
+- **THEN** the stored status is left unchanged
 
 ### Requirement: Balance collection during block indexing
 After processing a block and before persisting, the indexer worker SHALL collect all touched addresses, fetch their balances, and include balance changes in the atomic database transaction. This step runs synchronously within the block indexing pipeline.

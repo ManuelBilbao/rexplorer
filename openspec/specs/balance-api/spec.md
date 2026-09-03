@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+Exposes native-token balances and their history through the public and BFF APIs.
+
+## Requirements
 
 ### Requirement: Balance in address overview response
 The BFF address overview endpoint SHALL include the address's current native-token balance in the response. The balance MUST be returned as a string representation of the Wei value.
@@ -37,7 +41,9 @@ The public API address endpoint SHALL include the current balance in its respons
 - **WHEN** `GET /api/v1/chains/:chain_slug/addresses/:hash` is called
 - **THEN** the response includes `"balance_wei": "5000000000000000000"` (or `null`)
 
-### Diagram: Balance history data flow
+## Diagrams
+
+### Balance history data flow
 
 ```mermaid
 sequenceDiagram

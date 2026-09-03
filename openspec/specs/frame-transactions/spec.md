@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+EIP-8141 frame transactions: per-frame execution, receipts, logs and operations.
+
+## Requirements
 
 ### Requirement: Frames table
 The system SHALL maintain a `frames` table storing per-frame data from EIP-8141 frame transactions. Each frame MUST be uniquely identified by `(chain_id, transaction_id, frame_index)` and MUST store: `mode` (integer: 0=DEFAULT, 1=VERIFY, 2=SENDER), `target` (address, nullable), `gas_limit`, `gas_used` (from frame receipt), `status` (boolean, from frame receipt), and `data` (bytea, full calldata). The table MUST have an index on `(chain_id, target)` for address page queries.

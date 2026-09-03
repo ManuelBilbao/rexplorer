@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+The versioned `/api/v1` surface that external developers, wallets and analytics build on.
+
+## Requirements
 
 ### Requirement: Blocks endpoint
 The system SHALL expose `GET /api/v1/chains/:chain_slug/blocks` returning a paginated list of blocks and `GET /api/v1/chains/:chain_slug/blocks/:number` returning a single block by number. Both MUST include block header fields (number, hash, timestamp, gas_used, gas_limit, base_fee_per_gas, transaction_count). The list endpoint MUST support cursor-based pagination using block number as cursor.

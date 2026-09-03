@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+The background worker that decodes and narrates operations, and re-narrates them when the decoder improves.
+
+## Requirements
 
 ### Requirement: Async decoder worker
 The system SHALL provide `Rexplorer.Decoder.Worker` as a GenServer that periodically queries for operations needing decoding and processes them in batches. It MUST run independently from the indexer.

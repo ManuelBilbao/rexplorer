@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+Aggregated endpoints shaped for the React frontend, so a page renders from one request instead of several.
+
+## Requirements
 
 ### Requirement: Transaction detail aggregate
 The system SHALL expose `GET /internal/chains/:chain_slug/transactions/:hash` returning a single response that includes the transaction, its operations (with decoded summaries), token transfers (with resolved token names/symbols), event logs, and any cross-chain links. This avoids multiple round-trips from the UI.

@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+Turns a semantic action into the sentence a person actually reads.
+
+## Requirements
 
 ### Requirement: Action narration
 The system SHALL provide `Rexplorer.Decoder.Narrator.narrate/2` that takes an `%Action{}` struct and a context (containing chain_id for token resolution) and returns a human-readable string.

@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+Per-protocol modules that read a decoded call and say what it means — a swap, a supply, a transfer.
+
+## Requirements
 
 ### Requirement: Interpreter behaviour
 The system SHALL define a `Rexplorer.Decoder.Interpreter` behaviour with callbacks:
