@@ -103,6 +103,7 @@ rexplorer/
 
 | Document | Description |
 |----------|-------------|
+| [`docs/roadmap.md`](docs/roadmap.md) | What is planned next, in priority order |
 | [`docs/architecture.md`](docs/architecture.md) | System overview, data model ER diagram, app responsibilities |
 | [`docs/api.md`](docs/api.md) | Public API reference with examples |
 | [`docs/chain-adapters.md`](docs/chain-adapters.md) | How to implement a new chain adapter |
