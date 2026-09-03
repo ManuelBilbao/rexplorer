@@ -11,15 +11,14 @@ traced to its proposal, design, specs and tasks.
 
 | # | Item | What it needs | Status | Change |
 |---|------|---------------|--------|--------|
-| 1 | ERC-4337 UserOps | An unwrapper for `handleOps` that emits one operation per UserOp; paymaster and smart-wallet labels. `Schema.Operation` already has the `user_operation` type. | in progress | [`erc-4337-user-operations`](../openspec/changes/erc-4337-user-operations/) |
-| 2 | Historical backfill | The indexer only follows the chain head, so there is no past data. Needs a backward worker and per-chain progress tracking. | planned | — |
-| 3 | Reorg recovery | The worker detects a reorg and halts. Needs to roll back the affected blocks and resume. | planned | — |
-| 4 | Cross-chain journeys | Nothing writes `CrossChainLink` today. Needs a producer that matches deposit and withdrawal events across chains. | planned | — |
-| 5 | L2 lifecycle stages | Batches are tracked, proved and finalized are not. Needs an adapter callback per stage and the stage shown on the tx page. | planned | — |
-| 6 | Wider ABI coverage | Selectors come from a hardcoded list, so unknown calls show raw hex. Needs per-contract ABIs and a lookup for unknown selectors. | idea | — |
-| 7 | Progressive disclosure | A user/dev mode toggle so raw fields stay reachable without cluttering the default view. | idea | — |
-| 8 | Scale work | Query benchmarks, missing indexes and a load test against the target of millions of daily pageviews. | idea | — |
-| 9 | MEV visibility | Bundle and sandwich detection. Explicitly deferred until the items above are done. | idea | — |
+| 1 | Historical backfill | The indexer only follows the chain head, so there is no past data. Needs a backward worker and per-chain progress tracking. | next | — |
+| 2 | Reorg recovery | The worker detects a reorg and halts. Needs to roll back the affected blocks and resume. | planned | — |
+| 3 | Cross-chain journeys | Nothing writes `CrossChainLink` today. Needs a producer that matches deposit and withdrawal events across chains. | planned | — |
+| 4 | L2 lifecycle stages | Batches are tracked, proved and finalized are not. Needs an adapter callback per stage and the stage shown on the tx page. | planned | — |
+| 5 | Wider ABI coverage | Selectors come from a hardcoded list, so unknown calls show raw hex. Needs per-contract ABIs and a lookup for unknown selectors. | idea | — |
+| 6 | Progressive disclosure | A user/dev mode toggle so raw fields stay reachable without cluttering the default view. | idea | — |
+| 7 | Scale work | Query benchmarks, missing indexes and a load test against the target of millions of daily pageviews. | idea | — |
+| 8 | MEV visibility | Bundle and sandwich detection. Explicitly deferred until the items above are done. | idea | — |
 
 ## Done
 
@@ -41,3 +40,4 @@ Shipped work, with the full record in `openspec/changes/archive/`.
 | [`address-page-redesign`](../openspec/changes/archive/2026-04-08-address-page-redesign/) | Balance, chart, tabbed pagination |
 | [`frame-transactions`](../openspec/changes/archive/2026-04-08-frame-transactions/) | EIP-8141 frames |
 | [`adopt-ui-components`](../openspec/changes/archive/2026-04-09-adopt-ui-components/) | Component library across all pages |
+| [`erc-4337-user-operations`](../openspec/changes/archive/2026-09-03-erc-4337-user-operations/) | ERC-4337 UserOps, `op_extra`, address role labels |

@@ -64,7 +64,7 @@ The system SHALL provide `Rexplorer.Chains` with functions: `list_enabled_chains
 - **THEN** it returns `{:error, :not_found}`
 
 ### Requirement: Search module
-The system SHALL provide `Rexplorer.Search.query(input, opts)` that classifies the input (tx hash, block number, address) and returns matching results across chains (or scoped to a specific chain if provided).
+The system SHALL provide `Rexplorer.Search.query(input, opts)` that classifies the input (tx hash, userOpHash, block number, address) and returns matching results across chains (or scoped to a specific chain if provided). A 66-character hex string is first looked up as a transaction hash; if nothing matches, it SHALL be looked up as a userOpHash against the stored operations, resolving to the parent transaction so the caller can navigate to it.
 
 #### Scenario: Search identifies transaction hash
 - **WHEN** `Rexplorer.Search.query("0x" <> 64_hex_chars)` is called
@@ -77,6 +77,18 @@ The system SHALL provide `Rexplorer.Search.query(input, opts)` that classifies t
 #### Scenario: Search identifies block number
 - **WHEN** `Rexplorer.Search.query("20000000")` is called
 - **THEN** it classifies as `:block_number` and searches the blocks table
+
+#### Scenario: Search falls back to userOpHash
+- **WHEN** a 66-character hex string matches no transaction but matches a stored userOpHash
+- **THEN** it classifies as `:user_operation` and returns the parent transaction along with the userOpHash
+
+#### Scenario: Hash matches nothing
+- **WHEN** a 66-character hex string matches neither a transaction nor a userOpHash
+- **THEN** the result is empty, as before
+
+#### Scenario: Chain-scoped userOpHash search
+- **WHEN** a userOpHash search is scoped to a chain
+- **THEN** only operations on that chain are considered
 
 ### Requirement: Internal transactions query module
 The system SHALL provide `Rexplorer.InternalTransactions` with functions for querying internal transactions by address. This module MUST use the two-query union pattern (separate queries on `from_address` and `to_address` indexes, merged in Elixir) for efficient address lookups.

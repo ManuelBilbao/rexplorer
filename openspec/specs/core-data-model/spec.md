@@ -35,15 +35,23 @@ The system SHALL store transactions in a `transactions` table. Each transaction 
 - **THEN** the system stores it with `from_address = sender`, `to_address = NULL`, `value = 0`, `input = NULL`, `transaction_type = 6`, and `payer` set from the receipt
 
 ### Requirement: Operation abstraction
-The system SHALL store operations in an `operations` table. An operation represents a single user intent extracted from a transaction. A transaction MAY contain one or more operations. Each operation MUST reference its parent transaction and store: operation_type (enum: `call`, `user_operation`, `multisig_execution`, `multicall_item`, `delegate_call`), operation_index within the transaction, from_address (the logical sender), to_address, value, input data, and decoded_summary (nullable text for the human-readable narration).
+The system SHALL store operations in an `operations` table. An operation represents a single user intent extracted from a transaction. A transaction MAY contain one or more operations. Each operation MUST reference its parent transaction and store: operation_type (enum: `call`, `user_operation`, `multisig_execution`, `multicall_item`, `delegate_call`), operation_index within the transaction, from_address (the logical sender), to_address, value, input data, decoded_summary (nullable text for the human-readable narration), and `op_extra` (a JSON object, defaulting to empty, holding structured facts that belong to the operation but have no column of their own — the ERC-4337 fields `user_op_hash`, `user_op_index`, `entry_point`, `entry_point_version`, `paymaster`, `factory`, `success` and `actual_gas_cost`).
 
 #### Scenario: Simple EOA transaction produces one operation
 - **WHEN** a standard EOA-to-EOA transfer is processed
-- **THEN** exactly one operation with type `call` is created, referencing the transaction
+- **THEN** exactly one operation with type `call` is created, referencing the transaction, with an empty `op_extra`
 
 #### Scenario: AA bundler transaction produces multiple operations
 - **WHEN** an ERC-4337 `handleOps` bundler transaction is processed
-- **THEN** one operation of type `user_operation` is created for each UserOperation in the bundle, each with its own logical `from_address` (the smart wallet sender)
+- **THEN** at least one operation of type `user_operation` is created per UserOperation in the bundle, each with its own logical `from_address` (the smart wallet sender) and an `op_extra` carrying that UserOperation's hash, index and EntryPoint
+
+#### Scenario: Batched UserOperation produces one operation per inner call
+- **WHEN** a UserOperation batches several calls
+- **THEN** one `user_operation` operation is created per inner call, all sharing the same `user_op_index` and `user_op_hash` in `op_extra`
+
+#### Scenario: Sponsored UserOperation records its paymaster
+- **WHEN** a UserOperation is paid for by a paymaster
+- **THEN** the operation's `op_extra` carries the paymaster address, and an unsponsored one carries none
 
 #### Scenario: Safe multisig execution produces wrapped operation
 - **WHEN** a Safe `execTransaction` call is processed
@@ -60,6 +68,10 @@ The system SHALL store operations in an `operations` table. An operation represe
 #### Scenario: Operation from regular transaction
 - **WHEN** a regular transaction produces an operation
 - **THEN** the operation is stored with `frame_index = NULL`
+
+#### Scenario: Lookup by userOpHash
+- **WHEN** an operation is searched for by the userOpHash held in its `op_extra`, scoped to a chain
+- **THEN** the lookup is index-backed rather than a full scan of the operations table
 
 ### Requirement: Address tracking
 The system SHALL maintain an `addresses` table. Each address MUST be uniquely identified by `(chain_id, hash)`. Addresses MUST store: hash (the 20-byte address), contract flag (boolean), contract_code_hash (nullable), label (nullable text for ENS or known names), first_seen_at timestamp, and `current_balance_wei` (nullable numeric — the latest known native-token balance in Wei, updated by the indexer whenever a new balance change is recorded).

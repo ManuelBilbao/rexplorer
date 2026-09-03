@@ -70,12 +70,12 @@
 ## 11. Frontend
 
 - [x] 11.1 Extend `Operation` in `api/types.ts` with the `op_extra` fields; verify `make frontend.typecheck` passes
-- [ ] 11.2 Build a `UserOpCard` explorer component — sender via `AddressDisplay`, status via `StatusBadge`, paymaster and deployment badges via `Badge`, copyable userOpHash, decoded actions list; verify it renders each variant against fixture props
+- [x] 11.2 Build a `UserOpCard` explorer component — sender via `AddressDisplay`, status via `StatusBadge`, paymaster and deployment badges via `Badge`, copyable userOpHash, decoded actions list; verify it renders each variant against fixture props
 - [x] 11.3 Group `data.operations` by `user_op_index` in `TxDetailPage` and render a UserOperations section for bundles; verify a batched UserOp shows as one card with two actions
-- [ ] 11.4 Make the story hero AA-aware — describe the bundle from the user's point of view, and read as the single operation's story when the bundle holds one; verify against a one-op and a three-op fixture
+- [x] 11.4 Make the story hero AA-aware — describe the bundle from the user's point of view, and read as the single operation's story when the bundle holds one; verify against a one-op and a three-op fixture
 - [x] 11.5 Keep advanced mode intact: raw operations list and decoded EntryPoint logs still shown; verify by toggling advanced on a bundle fixture
 - [x] 11.6 Handle the `user_operation` search result type in the search UI so a userOpHash navigates to its transaction; verify by searching a known hash
-- [ ] 11.7 Verify no regression on non-AA transactions: no UserOperations section, page identical to before
+- [x] 11.7 Verify no regression on non-AA transactions: no UserOperations section, page identical to before
 
 ## 12. Documentation
 
@@ -90,5 +90,5 @@
 - [x] 13.1 Run `make test` — all Elixir tests pass
 - [x] 13.2 Run `mix compile --warnings-as-errors` and `mix format --check-formatted`
 - [x] 13.3 Run `make frontend.typecheck` and `make frontend.build`
-- [ ] 13.4 Index a real mainnet bundle end to end and verify the tx page shows one card per UserOperation with correct senders, paymaster badge and per-operation outcomes
+- [x] 13.4 Index a real mainnet bundle end to end and verify the tx page shows one card per UserOperation with correct senders, paymaster badge and per-operation outcomes
 - [x] 13.5 Verify a real sponsored UserOp's hash, pasted into search, lands on its transaction page
